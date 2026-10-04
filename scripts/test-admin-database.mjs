@@ -26,6 +26,9 @@ await db.exec(
   ),
 );
 await db.exec(
+  "alter table history_purchase add column is_invoice_used boolean not null default false",
+);
+await db.exec(
   await readFile(
     new URL(
       "../supabase/migrations/202610040003_purchase_libraries.sql",
@@ -209,6 +212,24 @@ assert.equal(
 await assert.rejects(
   change("transactions", "UPDATE", "1", { is_procces: false }),
 );
+await db.exec("reset role");
+const beforeRerun = (
+  await db.query("select * from history_purchase order by id")
+).rows;
+await db.exec(
+  await readFile(
+    new URL(
+      "../supabase/migrations/202610040003_purchase_libraries.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  ),
+);
+assert.deepEqual(
+  (await db.query("select * from history_purchase order by id")).rows,
+  beforeRerun,
+);
+await db.exec("set role service_role");
 const partial = await batch("games", "UPSERT", [
   { row: 2, action: "UPSERT", data: { app_id: "20", name: "Valid" } },
   { row: 3, action: "UPSERT", data: { app_id: "21", name: null } },

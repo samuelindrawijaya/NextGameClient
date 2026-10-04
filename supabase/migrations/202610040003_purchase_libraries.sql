@@ -1,11 +1,25 @@
 begin;
-alter table public.history_purchase add column user_id bigint references public."user"(user_id);
-alter table public.history_purchase add column is_processed boolean not null default false;
-alter table public.history_purchase add column is_invoice_used boolean not null default false;
-update public.history_purchase set is_processed = is_procces;
-alter table public.user_list_game add column purchase_id bigint references public.history_purchase(id);
-create index history_purchase_user_id_idx on public.history_purchase(user_id);
-create index user_list_game_user_app_idx on public.user_list_game(user_id,app_id_buy);
+alter table public.history_purchase add column if not exists user_id bigint;
+alter table public.history_purchase add column if not exists is_invoice_used boolean not null default false;
+do $$
+begin
+  if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='history_purchase' and column_name='is_processed') then
+    alter table public.history_purchase add column is_processed boolean not null default false;
+    update public.history_purchase set is_processed = is_procces;
+  end if;
+end $$;
+alter table public.user_list_game add column if not exists purchase_id bigint;
+do $$
+begin
+  if not exists (select 1 from pg_constraint c join pg_attribute a on a.attrelid=c.conrelid and a.attnum=any(c.conkey) where c.conrelid='public.history_purchase'::regclass and c.contype='f' and a.attname='user_id' and c.confrelid='public."user"'::regclass) then
+    alter table public.history_purchase add constraint history_purchase_user_id_fkey foreign key(user_id) references public."user"(user_id);
+  end if;
+  if not exists (select 1 from pg_constraint c join pg_attribute a on a.attrelid=c.conrelid and a.attnum=any(c.conkey) where c.conrelid='public.user_list_game'::regclass and c.contype='f' and a.attname='purchase_id' and c.confrelid='public.history_purchase'::regclass) then
+    alter table public.user_list_game add constraint user_list_game_purchase_id_fkey foreign key(purchase_id) references public.history_purchase(id);
+  end if;
+end $$;
+create index if not exists history_purchase_user_id_idx on public.history_purchase(user_id);
+create index if not exists user_list_game_user_app_idx on public.user_list_game(user_id,app_id_buy);
 create or replace function public.sync_purchase_processed() returns trigger language plpgsql set search_path = '' as $$
 begin
   if TG_OP = 'INSERT' then new.is_processed := new.is_processed or new.is_procces;
@@ -13,6 +27,7 @@ begin
   end if;
   new.is_procces := new.is_processed; return new;
 end $$;
+drop trigger if exists sync_purchase_processed on public.history_purchase;
 create trigger sync_purchase_processed before insert or update on public.history_purchase for each row execute function public.sync_purchase_processed();
 
 create or replace function public.admin_library_change(p_action text,p_id text,p_data jsonb,p_actor_id bigint,p_operator text)

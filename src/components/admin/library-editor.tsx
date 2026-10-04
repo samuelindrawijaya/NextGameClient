@@ -10,7 +10,7 @@ import {
 } from "@phosphor-icons/react";
 import { motion, useReducedMotion } from "framer-motion";
 import { validate, type Row } from "@/lib/admin/model";
-import type { PreviewStore } from "@/lib/admin/preview";
+import { hasGameAsset, type PreviewStore } from "@/lib/admin/preview";
 import styles from "./admin.module.css";
 
 function Picker({
@@ -39,17 +39,18 @@ function Picker({
             store[entity]
               .filter(
                 (row) =>
-                  String(row[entity === "users" ? "email" : "name"])
+                  (entity !== "games" || hasGameAsset(store, row.app_id)) &&
+                  (String(row[entity === "users" ? "email" : "name"])
                     .toLowerCase()
                     .includes(query.toLowerCase()) ||
-                  String(row[entity === "users" ? "user_id" : "app_id"]) ===
-                    query,
+                    String(row[entity === "users" ? "user_id" : "app_id"]) ===
+                      query),
               )
               .slice(0, 8),
           );
         else {
           const response = await fetch(
-            `/api/admin/${entity}?q=${encodeURIComponent(query)}`,
+            `/api/admin/${entity}?lookup=true${entity === "games" ? "&assets_only=true" : ""}&q=${encodeURIComponent(query)}`,
             { signal: controller.signal },
           );
           const result = await response.json();
@@ -93,7 +94,7 @@ function Picker({
         <span className={styles.libraryStep}>{isUser ? "01" : "02"}</span>
         <div>
           <h3>{isUser ? "Pilih pengguna" : "Pilih game"}</h3>
-          <p>{isUser ? "Penerima akses game" : "Dari koleksi Steam"}</p>
+          <p>{isUser ? "Penerima akses game" : "Game dengan asset tersedia"}</p>
         </div>
         {isUser ? (
           <UserCircle size={22} weight="light" />
@@ -168,12 +169,14 @@ function Picker({
                     <GameController size={32} weight="light" />
                   )}
                   <strong>
-                    {isUser ? "Belum ada pengguna" : "Game tidak ditemukan"}
+                    {isUser
+                      ? "Belum ada pengguna"
+                      : "Belum ada game dengan asset"}
                   </strong>
                   <p>
                     {isUser
                       ? "Pengguna akan tampil setelah terdaftar melalui service registrasi."
-                      : "Coba nama game atau Steam AppID lain."}
+                      : "Hanya game dengan data asset tersedia yang bisa ditambahkan. Coba pencarian lain atau lengkapi Game Assets."}
                   </p>
                 </div>
               )}

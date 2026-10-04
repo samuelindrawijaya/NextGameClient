@@ -144,6 +144,37 @@ test("production operator login protects mutations and hashes user passwords on 
   expect(cookie?.sameSite).toBe("Strict");
   await page.goto("/admin/games");
   await expect(page.locator("tbody")).toContainText("ELDEN RING");
+  for (const query of ["elden", "1245620"]) {
+    const result = await page.request.get(`/api/admin/games?q=${query}`);
+    expect(result.status()).toBe(200);
+    expect((await result.json()).rows[0].app_id).toBe("1245620");
+    const lookup = await page.request.get(
+      `/api/admin/games?lookup=true&q=${query}`,
+    );
+    expect(lookup.status()).toBe(200);
+    expect((await lookup.json()).pageSize).toBe(8);
+  }
+  const missing = await page.request.get("/api/admin/games?q=999999");
+  expect((await missing.json()).rows).toHaveLength(0);
+  const available = await page.request.get(
+    "/api/admin/games?lookup=true&assets_only=true&q=1245620",
+  );
+  expect(available.status()).toBe(200);
+  expect((await available.json()).rows[0].app_id).toBe("1245620");
+  const absent = await page.request.get(
+    "/api/admin/games?lookup=true&assets_only=true&q=999999",
+  );
+  expect((await absent.json()).rows).toHaveLength(0);
+  const blockedGrant = await page.request.post("/api/admin/libraries", {
+    headers: { origin: "http://localhost:3001" },
+    data: { data: { user_id: "1", app_id_buy: "999999" } },
+  });
+  expect(blockedGrant.status()).toBe(409);
+  expect((await blockedGrant.json()).error).toContain("belum memiliki asset");
+  expect((await page.request.get("/api/admin/games?q=el")).status()).toBe(400);
+  const timedOut = await page.request.get("/api/admin/games?q=timeout");
+  expect(timedOut.status()).toBe(502);
+  expect((await timedOut.json()).error).toContain("migration 004");
   await page.getByRole("button", { name: "Edit 1" }).click();
   await page
     .getByRole("dialog")

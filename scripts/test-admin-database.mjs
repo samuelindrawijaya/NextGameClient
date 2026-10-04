@@ -1,9 +1,10 @@
 import { readFile } from "node:fs/promises";
 import assert from "node:assert/strict";
 import { PGlite } from "@electric-sql/pglite";
+import { pg_trgm } from "@electric-sql/pglite/contrib/pg_trgm";
 import { hash } from "bcryptjs";
 
-const db = new PGlite();
+const db = new PGlite({ extensions: { pg_trgm } });
 await db.exec(`
 create role anon; create role authenticated; create role service_role bypassrls;
 create table game_lists(id bigint generated always as identity primary key,app_id bigint not null unique,name text not null,image text,description text,genre text[] not null default '{}',release_date date,categories text[] not null default '{}',publishers text[] not null default '{}',created_at timestamptz not null default now(),updated_at timestamptz not null default now());
@@ -37,6 +38,24 @@ await db.exec(
     "utf8",
   ),
 );
+const searchMigration = await readFile(
+  new URL(
+    "../supabase/migrations/202610050004_game_search_index.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
+await db.exec(searchMigration);
+await db.exec(searchMigration);
+const assetMigration = await readFile(
+  new URL(
+    "../supabase/migrations/202610050005_library_asset_requirement.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
+await db.exec(assetMigration);
+await db.exec(assetMigration);
 const scalar = async (sql, args = []) =>
   Object.values((await db.query(sql, args)).rows[0])[0];
 const change = async (entity, action, id, data) =>
@@ -64,6 +83,12 @@ const game = await change("games", "INSERT", null, {
 });
 assert.equal(game.app_id, "9223372036854775806");
 assert.equal(game.id, "1");
+await db.exec("set enable_seqscan = off");
+const searchPlan = await db.query(
+  "explain select * from game_lists where name ilike '%Original%'",
+);
+assert.match(JSON.stringify(searchPlan.rows), /game_lists_name_trgm_idx/);
+await db.exec("reset enable_seqscan");
 assert.equal(await scalar("select count(*)::int from audit_logs"), 1);
 await assert.rejects(
   change("games", "INSERT", null, {
@@ -148,11 +173,58 @@ assert.equal(
   0,
 );
 await assert.rejects(change("users", "DELETE", user.user_id, {}));
+await assert.rejects(
+  change("libraries", "INSERT", null, {
+    user_id: user.user_id,
+    app_id_buy: "10",
+  }),
+  /nonempty asset/,
+);
+await assert.rejects(
+  db.query("insert into user_list_game(user_id,app_id_buy) values($1,10)", [
+    user.user_id,
+  ]),
+  /nonempty asset/,
+);
+await db.exec(
+  "insert into game_assets(game_id,lua_data) values(10,'\\x'::bytea)",
+);
+assert.deepEqual(await scalar("select admin_library_games('',8)"), []);
+await assert.rejects(
+  change("libraries", "INSERT", null, {
+    user_id: user.user_id,
+    app_id_buy: "10",
+  }),
+  /nonempty asset/,
+);
+await db.exec(
+  "update game_assets set meta_data='\\x01'::bytea where game_id=10",
+);
+const eligible = await scalar("select admin_library_games('10',8)");
+assert.equal(eligible[0].app_id, "10");
+assert.equal("meta_data" in eligible[0], false);
+assert.equal("lua_data" in eligible[0], false);
+assert.equal((await scalar("select admin_library_games('New',8)")).length, 1);
+assert.deepEqual(
+  await scalar("select admin_library_games($1,8)", [game.app_id]),
+  [],
+);
 const special = await change("libraries", "INSERT", null, {
   user_id: user.user_id,
   app_id_buy: "10",
 });
 assert.equal(typeof special.id, "string");
+await assert.rejects(
+  change("libraries", "UPDATE", special.id, { app_id_buy: game.app_id }),
+  /nonempty asset/,
+);
+await assert.rejects(
+  db.query("update user_list_game set app_id_buy=$1 where id=$2", [
+    game.app_id,
+    special.id,
+  ]),
+  /nonempty asset/,
+);
 await assert.rejects(
   change("libraries", "INSERT", null, {
     user_id: user.user_id,
@@ -192,6 +264,10 @@ assert.equal(
 await change("transactions", "UPDATE", invoiceId, { is_invoice_used: false });
 await assert.rejects(
   change("libraries", "UPDATE", special.id, { purchase_id: "999" }),
+);
+await db.query(
+  "insert into game_assets(game_id,lua_data) values($1,'\\x01'::bytea)",
+  [game.app_id],
 );
 await db.query("insert into user_list_game(user_id,app_id_buy) values($1,$2)", [
   user.user_id,
@@ -340,6 +416,9 @@ assert.equal(
 assert.equal(
   await scalar("select count(*)::int from game_lists where app_id=40"),
   0,
+);
+await db.exec(
+  "insert into game_assets(game_id,lua_data) values(20,'\\x01'::bytea)",
 );
 await assert.rejects(
   change("libraries", "INSERT", null, {

@@ -35,6 +35,8 @@ export async function GET(request: Request, ctx: Context) {
         {
           userId: url.searchParams.get("user_id") || undefined,
           gameId: url.searchParams.get("game_id") || undefined,
+          lookup: url.searchParams.get("lookup") === "true",
+          assetsOnly: url.searchParams.get("assets_only") === "true",
         },
       ),
     );
@@ -104,6 +106,20 @@ async function mutate(
       throw new AdminError("Konfirmasi penghapusan diperlukan.");
     if (action === "DELETE") data = {};
     else data = validate(entity, body.data || {}, action === "INSERT");
+    if (entity === "libraries" && "app_id_buy" in data) {
+      const available = await readRows(
+        "games",
+        1,
+        String(data.app_id_buy),
+        undefined,
+        { assetsOnly: true, lookup: true },
+      );
+      if (!available.rows.length)
+        throw new AdminError(
+          "Game belum memiliki asset berisi data. Tambahkan asset sebelum memberikan game ke library.",
+          409,
+        );
+    }
     if ("password" in data) {
       data.password_hash = await hash(String(data.password), 12);
       delete data.password;

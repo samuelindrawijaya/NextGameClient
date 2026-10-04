@@ -105,6 +105,11 @@ const server = createServer(async (request, response) => {
     for await (const chunk of request) content += chunk;
     const body = JSON.parse(content);
     if (body.p_entity === "libraries") {
+      if (body.p_data.app_id_buy !== game.app_id) {
+        response.statusCode = 400;
+        response.end(JSON.stringify({ code: "PGA01" }));
+        return;
+      }
       const row = { id: String(libraries.length + 1), ...body.p_data };
       libraries.push(row);
       response.end(JSON.stringify(row));
@@ -128,7 +133,28 @@ const server = createServer(async (request, response) => {
     response.end(JSON.stringify(game));
     return;
   }
+  if (url.pathname === "/rest/v1/rpc/admin_library_games") {
+    let content = "";
+    for await (const chunk of request) content += chunk;
+    const body = JSON.parse(content);
+    const q = body.p_query;
+    response.end(
+      JSON.stringify(
+        !q ||
+          q === game.app_id ||
+          game.name.toLowerCase().includes(q.toLowerCase())
+          ? [game]
+          : [],
+      ),
+    );
+    return;
+  }
   const table = url.pathname.split("/").at(-1);
+  if (table === "game_lists" && url.searchParams.has("or")) {
+    response.statusCode = 500;
+    response.end(JSON.stringify({ code: "57014" }));
+    return;
+  }
   let rows =
     table === "game_lists"
       ? [game]
@@ -141,6 +167,21 @@ const server = createServer(async (request, response) => {
             : table === "history_purchase"
               ? invoices
               : [];
+  if (table === "game_lists") {
+    const appId = url.searchParams.get("app_id");
+    if (appId?.startsWith("eq."))
+      rows = rows.filter((row) => row.app_id === appId.slice(3));
+    const name = url.searchParams.get("name");
+    if (name?.startsWith("ilike.*"))
+      rows = rows.filter((row) =>
+        row.name.toLowerCase().includes(name.slice(7, -1).toLowerCase()),
+      );
+    if (name === "ilike.*timeout*") {
+      response.statusCode = 500;
+      response.end(JSON.stringify({ code: "57014" }));
+      return;
+    }
+  }
   if (table === "admin_accounts") {
     for (const field of ["email", "id"]) {
       const value = url.searchParams.get(field);

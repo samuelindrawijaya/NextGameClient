@@ -33,11 +33,17 @@ export async function database(path: string, init: RequestInit = {}) {
         : code === "23505"
           ? "ID, email, invoice, atau version sudah ada."
           : code === "PGRST202"
-            ? "RPC admin belum tersedia. Terapkan migration admin terlebih dahulu."
+            ? path === "rpc/admin_library_games"
+              ? "Pemilih game dengan asset belum tersedia. Terapkan migration 005 terlebih dahulu."
+              : "RPC admin belum tersedia. Terapkan migration admin terlebih dahulu."
             : code === "P0002"
               ? "Record tidak ditemukan."
-              : "Operasi database gagal. Periksa schema, izin server, dan migration admin.",
-      code === "23503" || code === "23505" ? 409 : 502,
+              : code === "PGA01"
+                ? "Game belum memiliki asset berisi data. Tambahkan asset sebelum memberikan game ke library."
+                : code === "57014"
+                  ? "Pencarian database melewati batas waktu. Terapkan migration 004 untuk index pencarian game."
+                  : "Operasi database gagal. Periksa schema, izin server, dan migration admin.",
+      code === "23503" || code === "23505" || code === "PGA01" ? 409 : 502,
     );
   }
   return response;
@@ -55,12 +61,33 @@ export async function readRows(
   page = 1,
   q = "",
   oneId?: string,
-  filters: { userId?: string; gameId?: string } = {},
+  filters: {
+    userId?: string;
+    gameId?: string;
+    lookup?: boolean;
+    assetsOnly?: boolean;
+  } = {},
 ) {
   const spec = entities[entity];
-  const limit = 20;
+  const limit = filters.lookup ? 8 : 20;
   let rows: Row[];
   let total = 0;
+  if (entity === "games" && filters.assetsOnly) {
+    const text = q
+      .replace(/[(),.%:*"\\]/g, " ")
+      .trim()
+      .slice(0, 100);
+    if (text && !/^\d+$/.test(text) && text.length < 3)
+      throw new AdminError(
+        "Ketik minimal 3 karakter nama game atau Steam AppID lengkap.",
+      );
+    const query = /^\d+$/.test(text) ? positiveId(text) : text;
+    const result: Row[] = await rpc("admin_library_games", {
+      p_query: query,
+      p_limit: limit,
+    });
+    return { rows: result, total: result.length, page: 1, pageSize: limit };
+  }
   if (entity === "assets") {
     const kind = process.env.ADMIN_ASSET_ID_KIND;
     if (kind !== "app_id" && kind !== "id")
@@ -108,7 +135,7 @@ export async function readRows(
       audit: ["action", "entity"],
       jobs: ["filename", "status"],
     };
-    const clauses = (fields[entity] || []).map(
+    const clauses = (entity === "games" ? [] : fields[entity] || []).map(
       (field) => `${field}.ilike.*${text}*`,
     );
     if (entity === "libraries") {
@@ -119,14 +146,21 @@ export async function readRows(
       const id = positiveId(text);
       clauses.push(`user_id.eq.${id}`, `app_id_buy.eq.${id}`);
     }
-    if (/^\d+$/.test(text))
-      clauses.push(
-        `${entity === "games" ? "app_id" : spec.pk}.eq.${positiveId(text)}`,
-      );
+    if (entity === "games") {
+      if (/^\d+$/.test(text)) params.set("app_id", `eq.${positiveId(text)}`);
+      else {
+        if (text.length < 3)
+          throw new AdminError(
+            "Ketik minimal 3 karakter nama game atau Steam AppID lengkap.",
+          );
+        params.set("name", `ilike.*${text}*`);
+      }
+    } else if (/^\d+$/.test(text))
+      clauses.push(`${spec.pk}.eq.${positiveId(text)}`);
     if (clauses.length) params.set("or", `(${clauses.join(",")})`);
   }
   const response = await database(`${spec.table}?${params}`, {
-    headers: { Prefer: "count=exact" },
+    headers: filters.lookup ? {} : { Prefer: "count=exact" },
   });
   rows = await response.json();
   total = Number(

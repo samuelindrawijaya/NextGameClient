@@ -3,6 +3,13 @@ import { entities, positiveId, redact, type Entity, type Row } from "./model";
 import type { ImportRow } from "./csv";
 
 export type PreviewStore = Record<Entity, Row[]>;
+export function hasGameAsset(store: PreviewStore, appId: Row[string]) {
+  return store.assets.some(
+    (asset) =>
+      String(asset.game_id) === String(appId) &&
+      (asset.has_lua === true || asset.has_meta === true),
+  );
+}
 export function seedPreview(): PreviewStore {
   return {
     games: games.map((game, i) => ({
@@ -102,10 +109,19 @@ export function previewChange(
     updated_at: stamp,
   };
   if (entity === "assets") {
-    if ("lua_data" in data) record.has_lua = Boolean(data.lua_data);
-    if ("meta_data" in data) record.has_meta = Boolean(data.meta_data);
+    if ("lua_data" in data)
+      record.has_lua = String(data.lua_data || "").length > 2;
+    if ("meta_data" in data)
+      record.has_meta = String(data.meta_data || "").length > 2;
   }
   if (entity === "libraries") {
+    if (
+      (action === "INSERT" || old?.app_id_buy !== record.app_id_buy) &&
+      !hasGameAsset(store, record.app_id_buy)
+    )
+      throw new Error(
+        "Game belum memiliki asset berisi data. Tambahkan asset terlebih dahulu.",
+      );
     if (
       !store.users.some((user) => user.user_id === record.user_id) ||
       !store.games.some((game) => game.app_id === record.app_id_buy)

@@ -26,14 +26,21 @@ export async function POST(request: Request) {
     if (
       typeof body.email !== "string" ||
       typeof body.password !== "string" ||
-      !checkCredentials(body.email, body.password)
+      !body.email ||
+      !body.password
     )
       return NextResponse.json(
         { error: "Email atau password tidak sesuai." },
         { status: 401 },
       );
+    const principal = await checkCredentials(body.email, body.password);
+    if (!principal)
+      return NextResponse.json(
+        { error: "Email atau password tidak sesuai." },
+        { status: 401 },
+      );
     const response = NextResponse.json({ ok: true });
-    response.cookies.set(cookieName, createSession(), cookieOptions);
+    response.cookies.set(cookieName, createSession(principal), cookieOptions);
     return response;
   } catch {
     return NextResponse.json(

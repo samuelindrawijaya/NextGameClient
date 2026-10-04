@@ -142,13 +142,26 @@ test("asset deletion is explicit and requires confirmation", async ({
 test("user support actions and versions work without storing passwords", async ({
   page,
 }) => {
-  await page.goto("/admin/add-user");
-  await page.getByLabel("Email").fill("support@example.test");
-  await page.getByLabel("Temporary password").fill("a-long-private-password");
-  await page.getByLabel("Machine info").fill("machine-A");
-  await page.getByRole("button", { name: "Tambah record" }).click();
-  await expect(page.getByRole("status")).toContainText("tersimpan");
   await page.goto("/admin/users");
+  await page.evaluate(() => {
+    const store = JSON.parse(
+      localStorage.getItem("nextgame-admin-preview-v1")!,
+    );
+    store.users = [
+      {
+        user_id: "1",
+        email: "support@example.test",
+        access_role_code: 1,
+        access_role_name: "user",
+        is_verified: false,
+        free_claim_game: 0,
+        machine_info: "machine-A",
+      },
+    ];
+    localStorage.setItem("nextgame-admin-preview-v1", JSON.stringify(store));
+  });
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Add User" })).toHaveCount(0);
   await expect(page.locator("tbody")).toContainText("support@example.test");
   await page.getByRole("button", { name: "View 1" }).click();
   await page.getByRole("button", { name: "Verify user" }).click();
@@ -162,7 +175,7 @@ test("user support actions and versions work without storing passwords", async (
   await page.getByRole("dialog").getByLabel("Role name").fill("support");
   await page
     .getByRole("dialog")
-    .getByLabel("Temporary password")
+    .getByLabel("New password")
     .fill("replacement-password-123");
   await page.getByRole("button", { name: "Simpan perubahan" }).click();
   await expect(page.locator("tbody")).not.toContainText("machine-A");
@@ -227,7 +240,7 @@ test("admin mobile navigation, empty states, and unauthenticated API boundaries"
     "audit",
     "import-games",
     "import-assets",
-    "add-user",
+
   ]) {
     await page.goto(`/admin/${section}`);
     await expect(page.locator("main h1")).toBeVisible();

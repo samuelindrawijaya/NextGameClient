@@ -51,6 +51,7 @@ import { previewCsv } from "@/lib/admin/csv";
 import { useMotionPreference } from "@/lib/use-motion-preference";
 import reference from "@/data/admin-reference.json";
 import RecordEditor from "./record-editor";
+import LibraryEditor from "./library-editor";
 import ImportWorkspace from "./import-workspace";
 import styles from "./admin.module.css";
 
@@ -62,13 +63,14 @@ const icons = {
   assets: Stack,
   "import-assets": DownloadSimple,
   users: Users,
-  "add-user": Plus,
   libraries: Database,
   transactions: Receipt,
   versions: GearSix,
   audit: ShieldCheck,
+  admins: ShieldCheck,
 };
 const descriptions: Record<Section, string> = {
+  admins: "Tambahkan admin dan kelola akses ke seluruh workspace.",
   dashboard: "Satu workspace untuk seluruh library.",
   games: "Kelola metadata game dan Steam App ID.",
   "import-games": "Tambahkan katalog melalui CSV yang sudah divalidasi.",
@@ -76,8 +78,7 @@ const descriptions: Record<Section, string> = {
   assets: "Kelola payload terenkripsi untuk setiap game.",
   "import-assets": "Import payload dengan action eksplisit di setiap baris.",
   users: "Kelola akun, akses, dan machine binding.",
-  "add-user": "Siapkan akun baru dengan role dan kuota yang sesuai.",
-  libraries: "Telusuri game yang terhubung dengan pengguna.",
+  libraries: "Tambahkan game pembelian atau game special ke library pengguna.",
   transactions: "Tinjau invoice dan proses transaksi yang tertunda.",
   versions: "Kelola versi aplikasi yang diterbitkan.",
   audit: "Jejak perubahan untuk membantu penelusuran.",
@@ -108,7 +109,7 @@ function timestamp(value: Json | undefined) {
 }
 function formatCell(field: string, value: Json | undefined) {
   if (field.endsWith("_at")) return timestamp(value);
-  if (field === "is_procces") return value ? "Completed" : "Pending";
+  if (field === "is_processed") return value ? "Processed" : "Pending";
   if (typeof value === "boolean") return value ? "Yes" : "No";
   return display(value);
 }
@@ -224,8 +225,15 @@ export default function AdminConsole({
         const saved = localStorage.getItem(key);
         if (saved) {
           const data = JSON.parse(saved);
-          if (Object.keys(seedPreview()).every((k) => Array.isArray(data[k])))
-            setStore(data);
+          if (
+            Object.keys(seedPreview()).every(
+              (k) => k === "admins" || Array.isArray(data[k]),
+            )
+          )
+            setStore({
+              ...data,
+              admins: Array.isArray(data.admins) ? data.admins : [],
+            });
         }
       } catch {
         localStorage.removeItem(key);
@@ -250,6 +258,7 @@ export default function AdminConsole({
             { signal: controller.signal },
           );
           const data = await response.json();
+          if (response.status === 401) router.refresh();
           if (!response.ok) throw new Error(data.error);
           if (entity) {
             setLiveRows(data.rows);
@@ -270,7 +279,7 @@ export default function AdminConsole({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [mode, entity, page, query, revision]);
+  }, [mode, entity, page, query, revision, router]);
   async function change(
     target: Entity,
     action: "INSERT" | "UPDATE" | "DELETE",
@@ -367,8 +376,9 @@ export default function AdminConsole({
           unverified: store.users.filter((row) => !row.is_verified).length,
           assets: store.assets.length,
           transactions: store.transactions.length,
-          pending: store.transactions.filter((row) => !row.is_procces).length,
-          completed: store.transactions.filter((row) => row.is_procces).length,
+          pending: store.transactions.filter((row) => !row.is_processed).length,
+          completed: store.transactions.filter((row) => row.is_processed)
+            .length,
           lastSync: store.sync[0] || null,
           currentVersion: store.versions[0] || null,
         }
@@ -392,6 +402,13 @@ export default function AdminConsole({
                   user_email:
                     store.users.find((user) => user.user_id === row.user_id)
                       ?.email || null,
+                  catalog_id:
+                    store.games.find((game) => game.app_id === row.app_id_buy)
+                      ?.id || null,
+                  invoice_number:
+                    store.transactions.find(
+                      (purchase) => purchase.id === row.purchase_id,
+                    )?.invoice_number || null,
                   game_name:
                     store.games.find(
                       (game) =>
@@ -567,9 +584,11 @@ export default function AdminConsole({
                     ? "Game"
                     : entity === "assets"
                       ? "Asset"
-                      : entity === "users"
-                        ? "User"
-                        : "Version"}
+                      : entity === "libraries"
+                        ? "Library"
+                        : entity === "admins"
+                          ? "Admin"
+                          : "Version"}
                   <span>
                     <ArrowUpRight size={16} weight="light" />
                   </span>
@@ -718,7 +737,7 @@ export default function AdminConsole({
                     {[
                       ["import-games", "Import game catalog", FileCsv],
                       ["import-assets", "Import encrypted assets", Stack],
-                      ["add-user", "Create user account", Users],
+                      ["libraries", "Kelola user libraries", Users],
                     ].map(([path, label, Icon]) => {
                       const Component = Icon as typeof Users;
                       return (
@@ -747,19 +766,6 @@ export default function AdminConsole({
                 </Frame>
               </div>
             </>
-          ) : section === "add-user" ? (
-            <Frame>
-              <div className={styles.cardTitle}>
-                <h2>New account</h2>
-                <ShieldCheck size={25} weight="light" />
-              </div>
-              <RecordEditor
-                entity="users"
-                record={null}
-                busy={busy}
-                onSave={(data) => change("users", "INSERT", null, data)}
-              />
-            </Frame>
           ) : (
             <>
               {importEntity && (
@@ -810,6 +816,17 @@ export default function AdminConsole({
                     {reference.ids.length} ID referensi{" "}
                     <ArrowUpRight size={13} />
                   </button>
+                </div>
+              )}
+              {section === "admins" && (
+                <div className={styles.contextNote}>
+                  <ShieldCheck size={19} weight="light" />
+                  <span>
+                    Akun tambahan memiliki akses penuh ke workspace. Akun utama
+                    dari environment tetap tersedia dan tidak ditampilkan dalam
+                    daftar ini. Edit untuk reset password atau ubah status
+                    aktif.
+                  </span>
                 </div>
               )}
               {entity && (
@@ -1043,8 +1060,12 @@ export default function AdminConsole({
               ? "Hapus record ini?"
               : modal.kind === "edit"
                 ? modal.record
-                  ? "Edit record."
-                  : "Tambah record."
+                  ? modal.entity === "libraries"
+                    ? "Kelola akses game."
+                    : "Edit record."
+                  : modal.entity === "libraries"
+                    ? "Tambahkan game ke library."
+                    : "Tambah record."
                 : "Record detail."}
           </h2>
           {mode === "preview" && (
@@ -1053,19 +1074,36 @@ export default function AdminConsole({
             </p>
           )}
           {modal.kind === "edit" ? (
-            <RecordEditor
-              entity={modal.entity}
-              record={modal.record}
-              busy={busy}
-              onSave={(data) =>
-                change(
-                  modal.entity,
-                  modal.record ? "UPDATE" : "INSERT",
-                  modal.record,
-                  data,
-                )
-              }
-            />
+            modal.entity === "libraries" ? (
+              <LibraryEditor
+                record={modal.record}
+                mode={mode}
+                store={store}
+                busy={busy}
+                onSave={(data) =>
+                  change(
+                    "libraries",
+                    modal.record ? "UPDATE" : "INSERT",
+                    modal.record,
+                    data,
+                  )
+                }
+              />
+            ) : (
+              <RecordEditor
+                entity={modal.entity}
+                record={modal.record}
+                busy={busy}
+                onSave={(data) =>
+                  change(
+                    modal.entity,
+                    modal.record ? "UPDATE" : "INSERT",
+                    modal.record,
+                    data,
+                  )
+                }
+              />
+            )
           ) : modal.kind === "delete" ? (
             <>
               <p>
@@ -1161,17 +1199,13 @@ export default function AdminConsole({
                   </button>
                 </div>
               )}
-              {modal.entity === "transactions" && !modal.record?.is_procces && (
+              {modal.entity === "transactions" && (
                 <button
                   className={styles.primary}
                   disabled={busy}
-                  onClick={() =>
-                    void change("transactions", "UPDATE", modal.record, {
-                      is_procces: true,
-                    }).catch(() => {})
-                  }
+                  onClick={() => setModal({ ...modal, kind: "edit" })}
                 >
-                  Mark Processed
+                  Edit status / user
                   <span>
                     <Check size={18} />
                   </span>

@@ -1,5 +1,32 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { compare } from "bcryptjs";
+import { database } from "./supabase";
+import { positiveId } from "./model";
+
+type Principal = {
+  email: string;
+  actorId: string | null;
+  accountId: string | null;
+  version: string | null;
+};
+async function accountBy(field: "email" | "id", value: string) {
+  const params = new URLSearchParams({
+    select: "id::text,email,password_hash,is_active,session_version::text",
+    [field]: `eq.${value}`,
+    limit: "1",
+  });
+  const rows = await (await database(`admin_accounts?${params}`)).json();
+  return rows[0] as
+    | {
+        id: string;
+        email: string;
+        password_hash: string;
+        is_active: boolean;
+        session_version: string;
+      }
+    | undefined;
+}
 
 export const cookieName = "nextgame_admin";
 const lifetime = 60 * 60 * 4;
@@ -28,17 +55,42 @@ function equal(a: string, b: string) {
   const y = Buffer.from(b);
   return x.length === y.length && timingSafeEqual(x, y);
 }
-export function checkCredentials(email: string, password: string) {
-  return (
-    adminConfigured() &&
-    equal(email.toLowerCase(), process.env.ADMIN_LOGIN_EMAIL!.toLowerCase()) &&
-    equal(password, process.env.ADMIN_LOGIN_PASSWORD!)
-  );
+export async function checkCredentials(
+  email: string,
+  password: string,
+): Promise<Principal | null> {
+  if (!adminConfigured() || email.length > 254) return null;
+  if (
+    equal(
+      email.trim().toLowerCase(),
+      process.env.ADMIN_LOGIN_EMAIL!.toLowerCase(),
+    )
+  )
+    return equal(password, process.env.ADMIN_LOGIN_PASSWORD!)
+      ? {
+          email: process.env.ADMIN_LOGIN_EMAIL!,
+          actorId: process.env.ADMIN_ACTOR_USER_ID || null,
+          accountId: null,
+          version: null,
+        }
+      : null;
+  if (new TextEncoder().encode(password).length > 72) return null;
+  const account = await accountBy("email", email.trim().toLowerCase());
+  if (!account?.is_active || !(await compare(password, account.password_hash)))
+    return null;
+  return {
+    email: account.email,
+    actorId: null,
+    accountId: account.id,
+    version: account.session_version,
+  };
 }
-export function createSession() {
+export function createSession(principal: Principal) {
   const payload = Buffer.from(
     JSON.stringify({
-      email: process.env.ADMIN_LOGIN_EMAIL,
+      email: principal.email,
+      accountId: principal.accountId,
+      version: principal.version,
       exp: Math.floor(Date.now() / 1000) + lifetime,
     }),
   ).toString("base64url");
@@ -53,12 +105,21 @@ export async function adminSession() {
     return null;
   try {
     const data = JSON.parse(Buffer.from(payload, "base64url").toString());
-    return data.email === process.env.ADMIN_LOGIN_EMAIL &&
-      Number.isInteger(data.exp) &&
-      data.exp > Date.now() / 1000
+    if (!Number.isInteger(data.exp) || data.exp <= Date.now() / 1000)
+      return null;
+    if (data.accountId) {
+      const account = await accountBy("id", positiveId(data.accountId));
+      return account?.is_active &&
+        account.email === data.email &&
+        account.session_version === data.version
+        ? { email: account.email, actorId: null, accountId: account.id }
+        : null;
+    }
+    return data.email === process.env.ADMIN_LOGIN_EMAIL
       ? {
           email: String(data.email),
           actorId: process.env.ADMIN_ACTOR_USER_ID || null,
+          accountId: null,
         }
       : null;
   } catch {

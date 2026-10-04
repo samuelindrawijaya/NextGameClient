@@ -64,7 +64,7 @@ Tes browser memeriksa pencarian/filter, detail, persistensi favorit, status down
 
 Buka http://localhost:3000/admin. Saat development tanpa konfigurasi admin, panel memakai preview lokal: delapan game kurasi dan tabel lain kosong. CRUD, import, audit preview, dan pencarian dapat dicoba; perubahan tersimpan di localStorage browser. Tombol Reset preview mengembalikan data awal. Preview tidak terhubung dengan Supabase dan tidak menyimpan password atau payload terenkripsi.
 
-Menu mengikuti `ADMIN_PANEL_MENU_SPEC.md`: Dashboard, Game List, Import Games, Sync Status, Game Assets, Import Assets, User List, Add User, User Libraries, Transactions, App Versions, dan Audit Logs. Layout memakai panel bersarang, floating sidebar, palette hitam–lime, Phosphor Light, Framer Motion, menu mobile, dan reduced motion.
+Menu mengikuti `ADMIN_PANEL_MENU_SPEC.md`: Dashboard, Game List, Import Games, Sync Status, Game Assets, Import Assets, User List, Admin Accounts, User Libraries, Transactions, App Versions, dan Audit Logs. Layout memakai panel bersarang, floating sidebar, palette hitam–lime, Phosphor Light, Framer Motion, menu mobile, dan reduced motion.
 
 ### Mengaktifkan database asli
 
@@ -81,7 +81,17 @@ Menu mengikuti `ADMIN_PANEL_MENU_SPEC.md`: Dashboard, Game List, Import Games, S
 6. Jalankan SQL di `supabase/migrations/202610040001_admin_panel.sql` melalui Supabase SQL Editor. Migration ini menambahkan empat fungsi RPC pada schema yang diberikan, tanpa membuat ulang tabel maupun identity ID. Fungsi hanya dapat dipanggil oleh `service_role`. Migration belum diterapkan ke Supabase asli.
 7. Restart `npm run dev`, kemudian login di `/admin`. Production yang belum dikonfigurasi menampilkan halaman setup; preview production hanya diaktifkan jika `ADMIN_ALLOW_PREVIEW=true`.
 
-Login operator menggunakan kredensial server terpisah. Role admin belum diikat ke `public.user`, karena mapping role code dan mekanisme login aplikasi existing belum ditentukan. Session memakai cookie httpOnly, SameSite Strict, Secure pada production, bertanda tangan HMAC, dan kedaluwarsa 4 jam. Login memiliki batas 10 percobaan per proses dalam 15 menit; deployment dengan beberapa instance memerlukan rate limiter bersama.
+Login akun utama menggunakan kredensial server terpisah. Akun tambahan disimpan di `public.admin_accounts`, terpisah dari akun pelanggan `public.user`. Session memakai cookie httpOnly, SameSite Strict, Secure pada production, bertanda tangan HMAC, dan kedaluwarsa 4 jam. Login memiliki batas 10 percobaan per proses dalam 15 menit; deployment dengan beberapa instance memerlukan rate limiter bersama.
+
+### Tambah akun admin
+
+1. Setelah migration `202610040001_admin_panel.sql`, jalankan `supabase/migrations/202610040002_admin_accounts.sql` di SQL Editor Supabase. Migration kedua membuat tabel admin yang hanya dapat diakses service_role dan RPC management dengan audit atomik. Tabel pelanggan existing tetap digunakan seperti sebelumnya.
+2. Deploy/redeploy kode terbaru di Vercel. Tetap isi `ADMIN_LOGIN_EMAIL`, `ADMIN_LOGIN_PASSWORD`, dan `ADMIN_SESSION_SECRET` untuk akun utama.
+3. Login dengan akun utama, buka **System → Admin Accounts**, lalu **Add Admin**. Isi email, password minimal 12 karakter (maksimal 72 byte), dan Active account.
+4. Akun baru dapat login pada `/admin` yang sama. Semua admin aktif memiliki akses penuh, termasuk mengelola akun admin lain. Password disimpan sebagai bcrypt hash; hash tidak ditampilkan di daftar, detail, atau audit.
+5. Edit akun untuk reset password atau nonaktifkan. Perubahan membatalkan session yang sudah ada; mengaktifkan kembali akun memerlukan login baru. Akun yang sedang digunakan tidak dapat menonaktifkan dirinya sendiri. Akun utama dari environment tidak masuk tabel/list dan tetap dapat digunakan untuk pemulihan akses.
+
+Preview lokal hanya mensimulasikan daftar/add/edit akun admin; login akun tambahan diuji melalui integrasi server. Migration kedua belum diterapkan ke Supabase asli oleh agent.
 
 ### Perilaku data
 
@@ -89,7 +99,11 @@ Login operator menggunakan kredensial server terpisah. Role admin belum diikat k
 - Games: CRUD, search, pagination, dan CSV. Default INSERT ONLY melewati `app_id` yang sudah ada; UPSERT memperbarui kolom yang disertakan. Relasi library/transaksi dapat menolak delete game.
 - Assets: daftar availability Lua/metadata, CRUD bytea hex, dan CSV INSERT/UPSERT/DELETE eksplisit. Payload harus sudah terenkripsi; panel tidak melakukan enkripsi/dekripsi. Saat edit manual, bytea kosong mempertahankan payload; centang hapus payload untuk mengosongkannya. Pada CSV UPSERT, kolom bytea kosong menjadi null. Penghapusan record membutuhkan action DELETE dan konfirmasi.
 - Users: add/edit, verify/unverify, role code/name, reset machine melalui form konfirmasi save, dan reset password. Password diproses server dengan bcrypt cost 12 dan tidak dikembalikan dalam API/audit. Verifikasi kompatibilitas bcrypt dengan login aplikasi existing sebelum membuat akun production. Delete/disable user belum tersedia karena schema tidak mempunyai status disabled dan policy delete belum ditentukan.
-- Libraries: read-only dengan email pengguna dan nama game; search live memakai User ID/App ID. Transactions: read detail dan Mark Processed, mempertahankan kolom existing `is_procces`; delete tidak tersedia.
+- User List hanya edit; registrasi user dilakukan service lain. Pembuatan user ditolak pada menu, API, dan RPC database.
+- User Libraries: pilih pengguna existing dan game katalog untuk memberikan game special atau menghubungkan invoice pembelian. Game yang sama tidak dapat ditambahkan dua kali melalui panel.
+- Transactions: admin mengedit User ID, is_processed, dan is_invoice_used secara manual. Menambahkan game ke library tidak mengubah status invoice.
+
+Terapkan migration 003 setelah 001 dan 002: supabase/migrations/202610040003_purchase_libraries.sql. Migration menambah history_purchase.user_id dan dua status, serta user_list_game.purchase_id. Pemilik transaksi lama tetap NULL sampai dipetakan. Service transaksi perlu mengirim user_id pengguna dan game_id dari game_lists.id (bukan Steam AppID). Library memakai app_id_buy dari game_lists.app_id. Kolom legacy is_procces dipertahankan dan disinkronkan dengan is_processed agar service lama tetap kompatibel. Setelah SQL diterapkan, redeploy aplikasi di Vercel.
 - App Versions: CRUD nomor versi; dashboard memakai record dengan ID terbaru. Sync Status membaca `game_sync_runs`; menjalankan workflow GitHub Actions tetap dilakukan oleh workflow existing.
 - Audit CRUD disimpan dalam transaksi yang sama dengan perubahan. Import memakai transaksi per baris: baris valid dapat tersimpan sementara baris gagal dicatat di `import_jobs.errors`; jumlah inserted/updated/skipped/deleted ditampilkan.
 - `Supabase Snippet Untitled query.csv` berisi 100 game_id saja. ID tersebut tersedia sebagai referensi pada dashboard/assets; daftar ini tidak cukup untuk import metadata game atau payload assets.

@@ -4,6 +4,28 @@ import { compare } from "bcryptjs";
 
 let credentialCheck = false;
 let changed = false;
+const admins = [];
+const libraries = [];
+const users = [
+  {
+    user_id: "1",
+    email: "user@example.test",
+    access_role_code: 1,
+    access_role_name: "user",
+    is_verified: false,
+    free_claim_game: 0,
+  },
+];
+const invoices = [
+  {
+    id: "1",
+    invoice_number: "INV-MANUAL",
+    user_id: "1",
+    game_id: "1",
+    is_processed: false,
+    is_invoice_used: false,
+  },
+];
 let next;
 function shutdown() {
   next?.kill();
@@ -51,10 +73,48 @@ const server = createServer(async (request, response) => {
     response.end("{}");
     return;
   }
+  if (url.pathname === "/rest/v1/rpc/admin_manage_account") {
+    let content = "";
+    for await (const chunk of request) content += chunk;
+    const body = JSON.parse(content);
+    let row;
+    if (body.p_action === "INSERT") {
+      row = {
+        id: String(admins.length + 1),
+        ...body.p_data,
+        is_active: body.p_data.is_active ?? true,
+        session_version: "1",
+        created_by_email: body.p_operator,
+        created_at: new Date().toISOString(),
+      };
+      admins.unshift(row);
+    } else {
+      row = admins.find((row) => row.id === body.p_id);
+      Object.assign(row, body.p_data, {
+        session_version: String(Number(row.session_version) + 1),
+      });
+    }
+    const { password_hash, session_version, ...safe } = row;
+    void password_hash;
+    void session_version;
+    response.end(JSON.stringify(safe));
+    return;
+  }
   if (url.pathname === "/rest/v1/rpc/admin_apply_change") {
     let content = "";
     for await (const chunk of request) content += chunk;
     const body = JSON.parse(content);
+    if (body.p_entity === "libraries") {
+      const row = { id: String(libraries.length + 1), ...body.p_data };
+      libraries.push(row);
+      response.end(JSON.stringify(row));
+      return;
+    }
+    if (body.p_entity === "transactions") {
+      Object.assign(invoices[0], body.p_data);
+      response.end(JSON.stringify(invoices[0]));
+      return;
+    }
     if (body.p_entity === "users") {
       credentialCheck =
         Boolean(body.p_data.password_hash?.startsWith("$2b$12$")) &&
@@ -69,7 +129,31 @@ const server = createServer(async (request, response) => {
     return;
   }
   const table = url.pathname.split("/").at(-1);
-  const rows = table === "game_lists" ? [game] : [];
+  let rows =
+    table === "game_lists"
+      ? [game]
+      : table === "admin_accounts"
+        ? admins
+        : table === "user"
+          ? users
+          : table === "user_list_game"
+            ? libraries
+            : table === "history_purchase"
+              ? invoices
+              : [];
+  if (table === "admin_accounts") {
+    for (const field of ["email", "id"]) {
+      const value = url.searchParams.get(field);
+      if (value?.startsWith("eq."))
+        rows = rows.filter((row) => row[field] === value.slice(3));
+    }
+    if (!url.searchParams.get("select")?.includes("password_hash"))
+      rows = rows.map(({ password_hash, session_version, ...row }) => {
+        void password_hash;
+        void session_version;
+        return row;
+      });
+  }
   response.setHeader(
     "Content-Range",
     `${rows.length ? "0-0" : "*"}/${rows.length}`,

@@ -5,6 +5,7 @@ export type Entity =
   | "games"
   | "assets"
   | "users"
+  | "admins"
   | "libraries"
   | "transactions"
   | "versions"
@@ -40,6 +41,32 @@ export type EntitySpec = {
   order: string;
 };
 export const entities: Record<Entity, EntitySpec> = {
+  admins: {
+    title: "Admin Accounts",
+    table: "admin_accounts",
+    pk: "id",
+    order: "id.desc",
+    create: true,
+    edit: true,
+    select: "id::text,email,is_active,created_by_email,created_at,updated_at",
+    columns: [
+      ["email", "Admin"],
+      ["is_active", "Active"],
+      ["created_by_email", "Created by"],
+      ["created_at", "Created"],
+      ["updated_at", "Updated"],
+    ],
+    fields: [
+      { key: "email", label: "Email", type: "text", required: true },
+      { key: "password", label: "Temporary password", type: "password" },
+      {
+        key: "is_active",
+        label: "Active account",
+        type: "boolean",
+        default: true,
+      },
+    ],
+  },
   games: {
     title: "Game List",
     table: "game_lists",
@@ -110,7 +137,6 @@ export const entities: Record<Entity, EntitySpec> = {
     select:
       "user_id::text,email,access_role_code,access_role_name,is_verified,free_claim_game,machine_info,created_at,updated_at",
     order: "user_id.desc",
-    create: true,
     edit: true,
     columns: [
       ["email", "User"],
@@ -122,7 +148,7 @@ export const entities: Record<Entity, EntitySpec> = {
     ],
     fields: [
       { key: "email", label: "Email", type: "text", required: true },
-      { key: "password", label: "Temporary password", type: "password" },
+      { key: "password", label: "New password", type: "password" },
       {
         key: "access_role_code",
         label: "Role code",
@@ -158,13 +184,26 @@ export const entities: Record<Entity, EntitySpec> = {
     table: "user_list_game",
     pk: "id",
     select:
-      "id::text,user_id::text,app_id_buy::text,is_from_free_claim,created_at,updated_at",
+      "id::text,user_id::text,app_id_buy::text,purchase_id::text,is_from_free_claim,created_at,updated_at",
     order: "id.desc",
-    fields: [],
+    create: true,
+    edit: true,
+    fields: [
+      { key: "user_id", label: "User ID", type: "id", required: true },
+      { key: "app_id_buy", label: "Steam App ID", type: "id", required: true },
+      { key: "purchase_id", label: "Purchase ID (invoice)", type: "id" },
+      {
+        key: "is_from_free_claim",
+        label: "From free claim",
+        type: "boolean",
+        default: false,
+      },
+    ],
     columns: [
       ["user_email", "User"],
       ["app_id_buy", "App ID"],
       ["game_name", "Game"],
+      ["invoice_number", "Invoice"],
       ["is_from_free_claim", "Free claim"],
       ["created_at", "Added"],
     ],
@@ -174,14 +213,31 @@ export const entities: Record<Entity, EntitySpec> = {
     table: "history_purchase",
     pk: "id",
     select:
-      "id::text,invoice_number,platform,game_id::text,is_procces,created_at,updated_at",
+      "id::text,invoice_number,user_id::text,platform,game_id::text,is_processed,is_invoice_used,created_at,updated_at",
     order: "id.desc",
-    fields: [],
+    edit: true,
+    fields: [
+      { key: "user_id", label: "User ID", type: "id" },
+      {
+        key: "is_processed",
+        label: "Processed",
+        type: "boolean",
+        default: false,
+      },
+      {
+        key: "is_invoice_used",
+        label: "Invoice used",
+        type: "boolean",
+        default: false,
+      },
+    ],
     columns: [
       ["invoice_number", "Invoice"],
+      ["user_email", "User"],
       ["platform", "Platform"],
       ["game_name", "Game"],
-      ["is_procces", "Status"],
+      ["is_processed", "Processed"],
+      ["is_invoice_used", "Invoice used"],
       ["created_at", "Created"],
     ],
   },
@@ -275,7 +331,6 @@ export const menu = [
     group: "Users",
     items: [
       ["users", "User List"],
-      ["add-user", "Add User"],
       ["libraries", "User Libraries"],
     ],
   },
@@ -283,6 +338,7 @@ export const menu = [
   {
     group: "System",
     items: [
+      ["admins", "Admin Accounts"],
       ["versions", "App Versions"],
       ["audit", "Audit Logs"],
     ],
@@ -410,7 +466,7 @@ export function validate(
       throw new Error("Image harus URL HTTP(S) atau path artwork lokal.");
     out[field.key] = field.key === "email" ? text.toLowerCase() : text;
   }
-  if (creating && entity === "users" && !out.password)
+  if (creating && (entity === "users" || entity === "admins") && !out.password)
     throw new Error("Temporary password wajib diisi.");
   if (!creating && entity === "assets") delete out.game_id;
   if (!Object.keys(out).length)

@@ -20,6 +20,7 @@ export function seedPreview(): PreviewStore {
     })),
     assets: [],
     users: [],
+    admins: [],
     libraries: [],
     transactions: [],
     versions: [],
@@ -48,13 +49,19 @@ export function previewChange(
   data: Row,
 ): PreviewStore {
   const spec = entities[entity];
+  if (
+    (action === "INSERT" && !spec.create) ||
+    (action === "UPDATE" && !spec.edit) ||
+    (action === "DELETE" && !spec.remove)
+  )
+    throw new Error("Action tidak tersedia.");
   const rows = store[entity];
   const old = rows.find((row) => String(row[spec.pk]) === id);
   if (action !== "INSERT" && !old) throw new Error("Record tidak ditemukan.");
   const unique =
     entity === "games"
       ? "app_id"
-      : entity === "users"
+      : entity === "users" || entity === "admins"
         ? "email"
         : entity === "versions"
           ? "version"
@@ -98,7 +105,44 @@ export function previewChange(
     if ("lua_data" in data) record.has_lua = Boolean(data.lua_data);
     if ("meta_data" in data) record.has_meta = Boolean(data.meta_data);
   }
+  if (entity === "libraries") {
+    if (
+      !store.users.some((user) => user.user_id === record.user_id) ||
+      !store.games.some((game) => game.app_id === record.app_id_buy)
+    )
+      throw new Error("Pilih pengguna dan game existing.");
+    if (
+      rows.some(
+        (row) =>
+          row.user_id === record.user_id &&
+          row.app_id_buy === record.app_id_buy &&
+          String(row.id) !== id,
+      )
+    )
+      throw new Error("Game sudah ada di library pengguna.");
+    if (
+      record.purchase_id &&
+      !store.transactions.some(
+        (invoice) =>
+          invoice.id === record.purchase_id &&
+          invoice.user_id === record.user_id &&
+          invoice.game_id ===
+            store.games.find((game) => game.app_id === record.app_id_buy)?.id,
+      )
+    )
+      throw new Error("Invoice harus sesuai pengguna dan game.");
+    if (record.purchase_id && record.is_from_free_claim)
+      throw new Error("Pembelian bukan free claim.");
+  }
+  if (
+    entity === "transactions" &&
+    record.user_id &&
+    !store.users.some((user) => user.user_id === record.user_id)
+  )
+    throw new Error("User tidak ditemukan.");
   const clean = redact(record) as Row;
+  if (entity === "admins" && action === "INSERT")
+    clean.created_by_email = "Local preview";
   const updated =
     action === "DELETE"
       ? rows.filter((row) => String(row[spec.pk]) !== id)

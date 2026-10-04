@@ -1,10 +1,11 @@
 import { readFile } from "node:fs/promises";
 import assert from "node:assert/strict";
 import { PGlite } from "@electric-sql/pglite";
+import { hash } from "bcryptjs";
 
 const db = new PGlite();
 await db.exec(`
-create role anon; create role authenticated; create role service_role;
+create role anon; create role authenticated; create role service_role bypassrls;
 create table game_lists(id bigint generated always as identity primary key,app_id bigint not null unique,name text not null,image text,description text,genre text[] not null default '{}',release_date date,categories text[] not null default '{}',publishers text[] not null default '{}',created_at timestamptz not null default now(),updated_at timestamptz not null default now());
 create table game_assets(game_id bigint primary key,lua_data bytea,meta_data bytea,encryption_version smallint not null default 1,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
 create table "user"(user_id bigint generated always as identity primary key,email text not null unique,password_hash text,access_role_code integer not null default 1,access_role_name text not null default 'user',is_verified boolean not null default false,free_claim_game integer not null default 0,machine_info text,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
@@ -19,6 +20,15 @@ await db.exec(
   await readFile(
     new URL(
       "../supabase/migrations/202610040001_admin_panel.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  ),
+);
+await db.exec(
+  await readFile(
+    new URL(
+      "../supabase/migrations/202610040003_purchase_libraries.sql",
       import.meta.url,
     ),
     "utf8",
@@ -118,10 +128,12 @@ await batch("assets", "MIXED", [
   { row: 2, action: "DELETE", data: { game_id: game.app_id } },
 ]);
 assert.equal(await scalar("select count(*)::int from game_assets"), 0);
-const user = await change("users", "INSERT", null, {
-  email: "user@example.test",
-  password_hash: "private-hash",
-});
+await assert.rejects(
+  change("users", "INSERT", null, { email: "blocked@example.test" }),
+);
+const user = await scalar(
+  `insert into "user"(email,password_hash) values('user@example.test','private-hash') returning jsonb_build_object('user_id',user_id::text)`,
+);
 assert.equal("password_hash" in user, false);
 await change("users", "UPDATE", user.user_id, {
   password_hash: "new-private-hash",
@@ -133,6 +145,51 @@ assert.equal(
   0,
 );
 await assert.rejects(change("users", "DELETE", user.user_id, {}));
+const special = await change("libraries", "INSERT", null, {
+  user_id: user.user_id,
+  app_id_buy: "10",
+});
+assert.equal(typeof special.id, "string");
+await assert.rejects(
+  change("libraries", "INSERT", null, {
+    user_id: user.user_id,
+    app_id_buy: "10",
+  }),
+);
+await db.query(
+  "insert into history_purchase(invoice_number,game_id,user_id,is_procces) values('LIBRARY-INVOICE',(select id from game_lists where app_id=10),$1,true)",
+  [user.user_id],
+);
+assert.equal(
+  await scalar(
+    "select is_processed from history_purchase where invoice_number='LIBRARY-INVOICE'",
+  ),
+  true,
+);
+const invoiceId = await scalar(
+  "select id::text from history_purchase where invoice_number='LIBRARY-INVOICE'",
+);
+await change("libraries", "UPDATE", special.id, { purchase_id: invoiceId });
+assert.equal(
+  await scalar("select is_invoice_used from history_purchase where id=$1", [
+    invoiceId,
+  ]),
+  false,
+);
+await change("transactions", "UPDATE", invoiceId, {
+  is_invoice_used: true,
+  is_processed: false,
+});
+assert.equal(
+  await scalar("select is_procces from history_purchase where id=$1", [
+    invoiceId,
+  ]),
+  false,
+);
+await change("transactions", "UPDATE", invoiceId, { is_invoice_used: false });
+await assert.rejects(
+  change("libraries", "UPDATE", special.id, { purchase_id: "999" }),
+);
 await db.query("insert into user_list_game(user_id,app_id_buy) values($1,$2)", [
   user.user_id,
   game.app_id,
@@ -144,9 +201,9 @@ await db.query(
   [game.id],
 );
 await assert.rejects(change("transactions", "DELETE", "1", {}));
-await change("transactions", "UPDATE", "1", { is_procces: true });
+await change("transactions", "UPDATE", "2", { is_processed: true });
 assert.equal(
-  await scalar("select is_procces from history_purchase where id=1"),
+  await scalar("select is_procces from history_purchase where id=2"),
   true,
 );
 await assert.rejects(
@@ -168,13 +225,109 @@ await assert.rejects(
 );
 await db.exec("reset role");
 await db.exec(
+  await readFile(
+    new URL(
+      "../supabase/migrations/202610040002_admin_accounts.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  ),
+);
+const manage = (action, id, data, self = null) =>
+  scalar("select public.admin_manage_account($1,$2,$3::jsonb,null,$4,$5,$4)", [
+    action,
+    id,
+    JSON.stringify(data),
+    "operator@example.test",
+    self,
+  ]);
+await db.exec("set role service_role");
+const passwordHash = await hash("additional-admin-password-123", 12);
+const admin = await manage("INSERT", null, {
+  email: "SECOND@example.test",
+  password_hash: passwordHash,
+});
+assert.equal(admin.email, "second@example.test");
+assert.equal("password_hash" in admin, false);
+await assert.rejects(
+  manage("INSERT", null, {
+    email: "second@example.test",
+    password_hash: passwordHash,
+  }),
+);
+await assert.rejects(
+  manage("INSERT", null, {
+    email: "operator@example.test",
+    password_hash: passwordHash,
+  }),
+);
+await assert.rejects(
+  manage("INSERT", null, {
+    email: "plain@example.test",
+    password_hash: "plaintext",
+  }),
+);
+await assert.rejects(
+  manage("UPDATE", admin.id, { is_active: false }, admin.id),
+);
+assert.equal(
+  await scalar("select session_version::text from admin_accounts where id=$1", [
+    admin.id,
+  ]),
+  "1",
+);
+await manage("UPDATE", admin.id, { is_active: false });
+assert.equal(
+  await scalar("select session_version::text from admin_accounts where id=$1", [
+    admin.id,
+  ]),
+  "2",
+);
+assert.equal(
+  await scalar(
+    "select count(*)::int from audit_logs where entity='admins' and (old_data::text like '%password_hash%' or new_data::text like '%password_hash%')",
+  ),
+  0,
+);
+await db.exec("reset role;set role anon");
+await assert.rejects(db.query("select * from admin_accounts"));
+await assert.rejects(
+  manage("INSERT", null, {
+    email: "denied@example.test",
+    password_hash: passwordHash,
+  }),
+);
+await db.exec("reset role");
+await db.exec(
   "create function public.reject_audit() returns trigger language plpgsql as $$begin raise exception 'audit unavailable'; end$$; create trigger reject_audit before insert on audit_logs for each row execute function public.reject_audit();",
 );
 await assert.rejects(
   change("games", "INSERT", null, { app_id: "40", name: "Must roll back" }),
 );
+await assert.rejects(
+  manage("INSERT", null, {
+    email: "rollback@example.test",
+    password_hash: passwordHash,
+  }),
+);
+assert.equal(
+  await scalar(
+    "select count(*)::int from admin_accounts where email='rollback@example.test'",
+  ),
+  0,
+);
 assert.equal(
   await scalar("select count(*)::int from game_lists where app_id=40"),
+  0,
+);
+await assert.rejects(
+  change("libraries", "INSERT", null, {
+    user_id: user.user_id,
+    app_id_buy: "20",
+  }),
+);
+assert.equal(
+  await scalar("select count(*)::int from user_list_game where app_id_buy=20"),
   0,
 );
 await db.close();

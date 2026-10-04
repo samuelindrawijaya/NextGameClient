@@ -55,6 +55,7 @@ export async function readRows(
   page = 1,
   q = "",
   oneId?: string,
+  filters: { userId?: string; gameId?: string } = {},
 ) {
   const spec = entities[entity];
   const limit = 20;
@@ -88,6 +89,10 @@ export async function readRows(
     offset: String(oneId ? 0 : (page - 1) * limit),
   });
   if (oneId) params.set(spec.pk, `eq.${positiveId(oneId)}`);
+  if (filters.userId && (entity === "transactions" || entity === "libraries"))
+    params.set("user_id", `eq.${positiveId(filters.userId)}`);
+  if (filters.gameId && entity === "transactions")
+    params.set("game_id", `eq.${positiveId(filters.gameId)}`);
   if (q.trim()) {
     const text = q
       .replace(/[(),.%:*"\\]/g, " ")
@@ -96,6 +101,7 @@ export async function readRows(
     const fields: Partial<Record<Entity, string[]>> = {
       games: ["name"],
       users: ["email", "access_role_name"],
+      admins: ["email"],
       transactions: ["invoice_number", "platform"],
       versions: ["version"],
       sync: ["status", "source"],
@@ -132,9 +138,18 @@ export async function readRows(
       .map((r) => r[gameKey])
       .filter(Boolean)
       .map(positiveId);
-    const userIds =
-      entity === "libraries" ? rows.map((r) => positiveId(r.user_id)) : [];
-    const [games, users] = await Promise.all([
+    const userIds = rows
+      .map((r) => r.user_id)
+      .filter(Boolean)
+      .map(positiveId);
+    const purchaseIds =
+      entity === "libraries"
+        ? rows
+            .map((r) => r.purchase_id)
+            .filter(Boolean)
+            .map(positiveId)
+        : [];
+    const [games, users, purchases] = await Promise.all([
       gameIds.length
         ? database(
             `game_lists?select=id::text,app_id::text,name&${entity === "libraries" ? "app_id" : "id"}=in.(${gameIds.join(",")})`,
@@ -145,9 +160,18 @@ export async function readRows(
             `user?select=user_id::text,email&user_id=in.(${userIds.join(",")})`,
           ).then((r) => r.json())
         : [],
+      purchaseIds.length
+        ? database(
+            `history_purchase?select=id::text,invoice_number&id=in.(${purchaseIds.join(",")})`,
+          ).then((r) => r.json())
+        : [],
     ]);
     rows = rows.map((row) => ({
       ...row,
+      catalog_id:
+        games.find(
+          (game: Row) => String(game.app_id) === String(row.app_id_buy),
+        )?.id || null,
       game_name:
         games.find(
           (game: Row) =>
@@ -157,6 +181,13 @@ export async function readRows(
       user_email:
         users.find((user: Row) => String(user.user_id) === String(row.user_id))
           ?.email || null,
+      ...(entity === "libraries"
+        ? {
+            invoice_number:
+              purchases.find((p: Row) => p.id === row.purchase_id)
+                ?.invoice_number || null,
+          }
+        : {}),
     }));
   }
   return {
@@ -190,7 +221,7 @@ export async function dashboard() {
     count("games"),
     count("assets"),
     count("transactions"),
-    count("transactions", "&is_procces=eq.false"),
+    count("transactions", "&is_processed=eq.false"),
     readRows("sync"),
     readRows("versions"),
   ]);

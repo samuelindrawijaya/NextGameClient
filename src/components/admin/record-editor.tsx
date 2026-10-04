@@ -155,6 +155,13 @@ export default function RecordEditor({
           digunakan.
         </p>
       )}
+      {entity === "admins" && (
+        <p className={styles.hint}>
+          Admin ini dapat mengelola seluruh workspace, termasuk menambahkan
+          admin lain. Mengganti password atau status akan membatalkan session
+          akun tersebut.
+        </p>
+      )}
       {entity === "assets" && (
         <p className={styles.hint}>
           Payload harus sudah terenkripsi. Editor ini menyimpan bytea, tanpa

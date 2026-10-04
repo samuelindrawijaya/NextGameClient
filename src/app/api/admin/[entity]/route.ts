@@ -32,6 +32,10 @@ export async function GET(request: Request, ctx: Context) {
         Math.floor(page),
         url.searchParams.get("q") || "",
         url.searchParams.get("id") || undefined,
+        {
+          userId: url.searchParams.get("user_id") || undefined,
+          gameId: url.searchParams.get("game_id") || undefined,
+        },
       ),
     );
   } catch (error) {
@@ -93,20 +97,34 @@ async function mutate(
     if (
       (action === "INSERT" && !spec.create) ||
       (action === "DELETE" && !spec.remove) ||
-      (action === "UPDATE" && !spec.edit && entity !== "transactions")
+      (action === "UPDATE" && !spec.edit)
     )
       throw new AdminError("Action tidak tersedia untuk module ini.", 403);
     if (action === "DELETE" && body.confirm !== true)
       throw new AdminError("Konfirmasi penghapusan diperlukan.");
     if (action === "DELETE") data = {};
-    else if (entity === "transactions") {
-      if (body.data?.is_procces !== true)
-        throw new AdminError("Hanya Mark Processed yang tersedia.");
-      data = { is_procces: true };
-    } else data = validate(entity, body.data || {}, action === "INSERT");
+    else data = validate(entity, body.data || {}, action === "INSERT");
     if ("password" in data) {
       data.password_hash = await hash(String(data.password), 12);
       delete data.password;
+    }
+    if (entity === "admins") {
+      if (data.email === process.env.ADMIN_LOGIN_EMAIL?.toLowerCase())
+        throw new AdminError("Email ini dipakai akun utama dari environment.");
+      if (session.accountId === String(body.id) && data.is_active === false)
+        throw new AdminError(
+          "Tidak dapat menonaktifkan akun yang sedang digunakan.",
+        );
+      const record = await rpc("admin_manage_account", {
+        p_action: action,
+        p_id: action === "INSERT" ? null : positiveId(body.id),
+        p_data: data,
+        p_actor_id: session.actorId,
+        p_operator: session.email,
+        p_self_id: session.accountId,
+        p_bootstrap_email: process.env.ADMIN_LOGIN_EMAIL,
+      });
+      return NextResponse.json({ ok: true, record });
     }
     const result = await rpc("admin_apply_change", {
       p_entity: entity,

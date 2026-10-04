@@ -1,0 +1,129 @@
+import { NextResponse } from "next/server";
+import { hash } from "bcryptjs";
+import { adminSession, assertOrigin } from "@/lib/admin/auth";
+import { entities, isEntity, positiveId, validate } from "@/lib/admin/model";
+import { AdminError, dashboard, readRows, rpc } from "@/lib/admin/supabase";
+import { previewCsv } from "@/lib/admin/csv";
+
+type Context = { params: Promise<{ entity: string }> };
+const failure = (error: unknown) =>
+  NextResponse.json(
+    { error: error instanceof Error ? error.message : "Operasi gagal." },
+    { status: error instanceof AdminError ? error.status : 400 },
+  );
+export async function GET(request: Request, ctx: Context) {
+  if (!(await adminSession()))
+    return NextResponse.json(
+      { error: "Login admin diperlukan." },
+      { status: 401 },
+    );
+  try {
+    const { entity } = await ctx.params;
+    if (entity === "dashboard") return NextResponse.json(await dashboard());
+    if (!isEntity(entity)) throw new AdminError("Module tidak ditemukan.", 404);
+    const url = new URL(request.url);
+    const page = Math.max(
+      1,
+      Math.min(100000, Number(url.searchParams.get("page")) || 1),
+    );
+    return NextResponse.json(
+      await readRows(
+        entity,
+        Math.floor(page),
+        url.searchParams.get("q") || "",
+        url.searchParams.get("id") || undefined,
+      ),
+    );
+  } catch (error) {
+    return failure(error);
+  }
+}
+async function mutate(
+  request: Request,
+  ctx: Context,
+  action: "INSERT" | "UPDATE" | "DELETE",
+) {
+  const session = await adminSession();
+  if (!session)
+    return NextResponse.json(
+      { error: "Login admin diperlukan." },
+      { status: 401 },
+    );
+  try {
+    assertOrigin(request);
+    const { entity } = await ctx.params;
+    const content = await request.text();
+    if (content.length > 6_000_000)
+      throw new AdminError("Permintaan terlalu besar.", 413);
+    const body = JSON.parse(content);
+    if (entity === "import" && action === "INSERT") {
+      if (
+        !["games", "assets"].includes(body.entity) ||
+        typeof body.csv !== "string"
+      )
+        throw new AdminError("Import tidak valid.");
+      if (
+        body.entity === "games" &&
+        !["INSERT_ONLY", "UPSERT"].includes(body.mode)
+      )
+        throw new AdminError("Mode import tidak valid.");
+      const preview = previewCsv(body.csv, body.entity);
+      if (preview.errors.length)
+        throw new AdminError(
+          `CSV tidak valid: baris ${preview.errors[0].row} — ${preview.errors[0].message}`,
+        );
+      if (
+        preview.rows.some((row) => row.action === "DELETE") &&
+        body.confirmDeletes !== true
+      )
+        throw new AdminError("Konfirmasi DELETE asset diperlukan.");
+      const result = await rpc("admin_import_batch", {
+        p_entity: body.entity,
+        p_mode: body.entity === "assets" ? "MIXED" : body.mode,
+        p_rows: preview.rows,
+        p_actor_id: session.actorId,
+        p_operator: session.email,
+        p_filename: String(body.filename || "import.csv").slice(0, 255),
+      });
+      return NextResponse.json(result);
+    }
+    if (!isEntity(entity)) throw new AdminError("Module tidak ditemukan.", 404);
+    const spec = entities[entity];
+    let data;
+    if (
+      (action === "INSERT" && !spec.create) ||
+      (action === "DELETE" && !spec.remove) ||
+      (action === "UPDATE" && !spec.edit && entity !== "transactions")
+    )
+      throw new AdminError("Action tidak tersedia untuk module ini.", 403);
+    if (action === "DELETE" && body.confirm !== true)
+      throw new AdminError("Konfirmasi penghapusan diperlukan.");
+    if (action === "DELETE") data = {};
+    else if (entity === "transactions") {
+      if (body.data?.is_procces !== true)
+        throw new AdminError("Hanya Mark Processed yang tersedia.");
+      data = { is_procces: true };
+    } else data = validate(entity, body.data || {}, action === "INSERT");
+    if ("password" in data) {
+      data.password_hash = await hash(String(data.password), 12);
+      delete data.password;
+    }
+    const result = await rpc("admin_apply_change", {
+      p_entity: entity,
+      p_action: action,
+      p_id: action === "INSERT" ? null : positiveId(body.id),
+      p_data: data,
+      p_actor_id: session.actorId,
+      p_operator: session.email,
+    });
+    return NextResponse.json({ ok: true, record: result });
+  } catch (error) {
+    return failure(error);
+  }
+}
+export const POST = (request: Request, ctx: Context) =>
+  mutate(request, ctx, "INSERT");
+export const PATCH = (request: Request, ctx: Context) =>
+  mutate(request, ctx, "UPDATE");
+export const DELETE = (request: Request, ctx: Context) =>
+  mutate(request, ctx, "DELETE");

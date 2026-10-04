@@ -1,0 +1,151 @@
+{
+  "fetched_at": "2026-10-03T16:41:56.975756+00:00",
+  "metadata_source": "https://api.steampowered.com/IStoreBrowseService/GetItems/v1/",
+  "genres": "Editorial browsing labels, not official Steam genre IDs",
+  "assets": [
+    {
+      "app_id": 1245620,
+      "asset": "poster",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1245620/library_600x900_2x.jpg",
+      "local": "/steam/1245620-poster.jpg"
+    },
+    {
+      "app_id": 1245620,
+      "asset": "hero",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1245620/library_hero.jpg",
+      "local": "/steam/1245620-hero.jpg"
+    },
+    {
+      "app_id": 1245620,
+      "asset": "header",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1245620/header.jpg",
+      "local": "/steam/1245620-header.jpg"
+    },
+    {
+      "app_id": 1091500,
+      "asset": "poster",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1091500/library_600x900_2x.jpg",
+      "local": "/steam/1091500-poster.jpg"
+    },
+    {
+      "app_id": 1091500,
+      "asset": "hero",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1091500/library_hero.jpg",
+      "local": "/steam/1091500-hero.jpg"
+    },
+    {
+      "app_id": 1091500,
+      "asset": "header",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1091500/header.jpg",
+      "local": "/steam/1091500-header.jpg"
+    },
+    {
+      "app_id": 1174180,
+      "asset": "poster",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1174180/library_600x900_2x.jpg",
+      "local": "/steam/1174180-poster.jpg"
+    },
+    {
+      "app_id": 1174180,
+      "asset": "hero",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1174180/library_hero.jpg",
+      "local": "/steam/1174180-hero.jpg"
+    },
+    {
+      "app_id": 1174180,
+      "asset": "header",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1174180/header.jpg",
+      "local": "/steam/1174180-header.jpg"
+    },
+    {
+      "app_id": 1903340,
+      "asset": "poster",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1903340/library_600x900_2x.jpg",
+      "local": "/steam/1903340-poster.jpg"
+    },
+    {
+      "app_id": 1903340,
+      "asset": "hero",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1903340/library_hero.jpg",
+      "local": "/steam/1903340-hero.jpg"
+    },
+    {
+      "app_id": 1903340,
+      "asset": "header",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1903340/header.jpg",
+      "local": "/steam/1903340-header.jpg"
+    },
+    {
+      "app_id": 1145360,
+      "asset": "poster",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1145360/library_600x900_2x.jpg",
+      "local": "/steam/1145360-poster.jpg"
+    },
+    {
+      "app_id": 1145360,
+      "asset": "hero",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1145360/library_hero.jpg",
+      "local": "/steam/1145360-hero.jpg"
+    },
+    {
+      "app_id": 1145360,
+      "asset": "header",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1145360/header.jpg",
+      "local": "/steam/1145360-header.jpg"
+    },
+    {
+      "app_id": 367520,
+      "asset": "poster",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/367520/library_600x900_2x.jpg",
+      "local": "/steam/367520-poster.jpg"
+    },
+    {
+      "app_id": 367520,
+      "asset": "hero",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/367520/library_hero.jpg",
+      "local": "/steam/367520-hero.jpg"
+    },
+    {
+      "app_id": 367520,
+      "asset": "header",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/367520/header.jpg",
+      "local": "/steam/367520-header.jpg"
+    },
+    {
+      "app_id": 1086940,
+      "asset": "poster",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1086940/library_600x900_2x.jpg",
+      "local": "/steam/1086940-poster.jpg"
+    },
+    {
+      "app_id": 1086940,
+      "asset": "hero",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1086940/library_hero.jpg",
+      "local": "/steam/1086940-hero.jpg"
+    },
+    {
+      "app_id": 1086940,
+      "asset": "header",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1086940/header.jpg",
+      "local": "/steam/1086940-header.jpg"
+    },
+    {
+      "app_id": 1030300,
+      "asset": "poster",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1030300/library_600x900_2x.jpg",
+      "local": "/steam/1030300-poster.jpg"
+    },
+    {
+      "app_id": 1030300,
+      "asset": "hero",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1030300/library_hero.jpg",
+      "local": "/steam/1030300-hero.jpg"
+    },
+    {
+      "app_id": 1030300,
+      "asset": "header",
+      "url": "https://cdn.akamai.steamstatic.com/steam/apps/1030300/header.jpg",
+      "local": "/steam/1030300-header.jpg"
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+[
+  {
+    "app_id": 1245620,
+    "name": "ELDEN RING",
+    "description": "THE CRITICALLY ACCLAIMED FANTASY ACTION RPG.\r\nRise, Tarnished, and be guided by grace to brandish the power of the Elden Ring and become an Elden Lord in the Lands Between.",
+    "genres": ["RPG", "Open World"],
+    "publisher": "FromSoftware, Inc., Bandai Namco Entertainment",
+    "release_date": "2022-02-24",
+    "steam_url": "https://store.steampowered.com/app/1245620/",
+    "poster": "/steam/1245620-poster.jpg",
+    "hero": "/steam/1245620-hero.jpg",
+    "header": "/steam/1245620-header.jpg"
+  },
+  {
+    "app_id": 1091500,
+    "name": "Cyberpunk 2077",
+    "description": "Cyberpunk 2077 is an open-world, action-adventure RPG set in the dark future of Night City — a dangerous megalopolis obsessed with power, glamor, and ceaseless body modification.",
+    "genres": ["RPG", "Open World"],
+    "publisher": "CD PROJEKT RED",
+    "release_date": "2020-12-10",
+    "steam_url": "https://store.steampowered.com/app/1091500/",
+    "poster": "/steam/1091500-poster.jpg",
+    "hero": "/steam/1091500-hero.jpg",
+    "header": "/steam/1091500-header.jpg"
+  },
+  {
+    "app_id": 1174180,
+    "name": "Red Dead Redemption 2",
+    "description": "Arthur Morgan and the Van der Linde Gang are outlaws on the run. With federal agents and bounty hunters massing on their heels, the gang must rob, steal, and fight their way across the rugged heartland in order to survive.",
+    "genres": ["Adventure", "Open World"],
+    "publisher": "Rockstar Games",
+    "release_date": "2019-12-05",
+    "steam_url": "https://store.steampowered.com/app/1174180/",
+    "poster": "/steam/1174180-poster.jpg",
+    "hero": "/steam/1174180-hero.jpg",
+    "header": "/steam/1174180-header.jpg"
+  },
+  {
+    "app_id": 1903340,
+    "name": "Clair Obscur: Expedition 33",
+    "description": "Lead the members of Expedition 33 on their quest to destroy the Paintress so that she can never paint death again. Explore a world of wonders inspired by Belle Époque France and battle unique enemies in this turn-based RPG with real-time mechanics.",
+    "genres": ["RPG", "Adventure"],
+    "publisher": "Kepler Interactive",
+    "release_date": "2025-04-24",
+    "steam_url": "https://store.steampowered.com/app/1903340/",
+    "poster": "/steam/1903340-poster.jpg",
+    "hero": "/steam/1903340-hero.jpg",
+    "header": "/steam/1903340-header.jpg"
+  },
+  {
+    "app_id": 1145360,
+    "name": "Hades",
+    "description": "Defy the god of the dead as you hack and slash out of the Underworld in this rogue-like dungeon crawler from the creators of Bastion, Transistor, and Pyre.",
+    "genres": ["Action", "Indie"],
+    "publisher": "Supergiant Games",
+    "release_date": "2020-09-17",
+    "steam_url": "https://store.steampowered.com/app/1145360/",
+    "poster": "/steam/1145360-poster.jpg",
+    "hero": "/steam/1145360-hero.jpg",
+    "header": "/steam/1145360-header.jpg"
+  },
+  {
+    "app_id": 367520,
+    "name": "Hollow Knight",
+    "description": "Forge your own path in Hollow Knight! An epic action adventure through a vast ruined kingdom of insects and heroes. Explore twisting caverns, battle tainted creatures and befriend bizarre bugs, all in a classic, hand-drawn 2D style.",
+    "genres": ["Adventure", "Indie"],
+    "publisher": "Team Cherry",
+    "release_date": "2017-02-24",
+    "steam_url": "https://store.steampowered.com/app/367520/",
+    "poster": "/steam/367520-poster.jpg",
+    "hero": "/steam/367520-hero.jpg",
+    "header": "/steam/367520-header.jpg"
+  },
+  {
+    "app_id": 1086940,
+    "name": "Baldur's Gate 3",
+    "description": "Baldur’s Gate 3 is a story-rich, party-based RPG set in the universe of Dungeons & Dragons, where your choices shape a tale of fellowship and betrayal, survival and sacrifice, and the lure of absolute power.",
+    "genres": ["RPG", "Adventure"],
+    "publisher": "Larian Studios",
+    "release_date": "2023-08-03",
+    "steam_url": "https://store.steampowered.com/app/1086940/",
+    "poster": "/steam/1086940-poster.jpg",
+    "hero": "/steam/1086940-hero.jpg",
+    "header": "/steam/1086940-header.jpg"
+  },
+  {
+    "app_id": 1030300,
+    "name": "Hollow Knight: Silksong",
+    "description": "Discover a vast, haunted kingdom in Hollow Knight: Silksong! Explore, fight and survive as you ascend to the peak of a land ruled by silk and song.",
+    "genres": ["Action", "Indie"],
+    "publisher": "Team Cherry",
+    "release_date": "2025-09-04",
+    "steam_url": "https://store.steampowered.com/app/1030300/",
+    "poster": "/steam/1030300-poster.jpg",
+    "hero": "/steam/1030300-hero.jpg",
+    "header": "/steam/1030300-header.jpg"
+  }
+]

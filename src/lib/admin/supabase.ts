@@ -41,7 +41,9 @@ export async function database(path: string, init: RequestInit = {}) {
               : code === "PGA01"
                 ? "Game belum memiliki asset berisi data. Tambahkan asset sebelum memberikan game ke library."
                 : code === "57014"
-                  ? "Pencarian database melewati batas waktu. Terapkan migration 004 untuk index pencarian game."
+                  ? path === "rpc/admin_assets_index"
+                    ? "Pencarian asset melewati batas waktu. Terapkan migration 004 dan 006 untuk mempercepat pencarian."
+                    : "Pencarian database melewati batas waktu. Terapkan migration 004 untuk index pencarian game."
                   : "Operasi database gagal. Periksa schema, izin server, dan migration admin.",
       code === "23503" || code === "23505" || code === "PGA01" ? 409 : 502,
     );
@@ -89,6 +91,15 @@ export async function readRows(
     return { rows: result, total: result.length, page: 1, pageSize: limit };
   }
   if (entity === "assets") {
+    const text = q
+      .replace(/[%_*\\]/g, " ")
+      .trim()
+      .slice(0, 100);
+    if (!oneId && text && !/^\d+$/.test(text) && text.length < 3)
+      throw new AdminError(
+        "Ketik minimal 3 karakter nama game atau Steam AppID lengkap.",
+      );
+    const query = /^\d+$/.test(text) ? positiveId(text) : text;
     const kind = process.env.ADMIN_ASSET_ID_KIND;
     if (kind !== "app_id" && kind !== "id")
       throw new AdminError(
@@ -98,7 +109,7 @@ export async function readRows(
     const result = await rpc("admin_assets_index", {
       p_limit: oneId ? 1 : limit,
       p_offset: oneId ? 0 : (page - 1) * limit,
-      p_query: oneId ? "" : q,
+      p_query: oneId ? "" : query,
       p_id_kind: kind,
       p_exact_id: oneId ? positiveId(oneId) : null,
     });

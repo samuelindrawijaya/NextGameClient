@@ -56,6 +56,15 @@ const assetMigration = await readFile(
 );
 await db.exec(assetMigration);
 await db.exec(assetMigration);
+const assetSearchMigration = await readFile(
+  new URL(
+    "../supabase/migrations/202610050006_asset_search.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
+await db.exec(assetSearchMigration);
+await db.exec(assetSearchMigration);
 const scalar = async (sql, args = []) =>
   Object.values((await db.query(sql, args)).rows[0])[0];
 const change = async (entity, action, id, data) =>
@@ -139,6 +148,31 @@ const exact = await scalar("select public.admin_assets_index(1,0,$1,$2,$3)", [
 ]);
 assert.equal(exact.rows.length, 1);
 assert.equal(exact.rows[0].game_id, game.app_id);
+const numericAsset = await scalar(
+  "select public.admin_assets_index(20,0,$1,'app_id')",
+  [game.app_id],
+);
+assert.equal(numericAsset.total, "1");
+assert.equal(numericAsset.rows[0].game_id, game.app_id);
+const namedAsset = await scalar(
+  "select public.admin_assets_index(20,0,'cHaNgEd','app_id')",
+);
+assert.equal(namedAsset.total, "1");
+assert.equal(namedAsset.rows[0].game_name, "Changed");
+assert.equal("lua_data" in namedAsset.rows[0], false);
+assert.equal("meta_data" in namedAsset.rows[0], false);
+assert.equal(
+  (await scalar("select public.admin_assets_index(20,0,'922','app_id')")).total,
+  "0",
+);
+assert.deepEqual(
+  (await scalar("select public.admin_assets_index(20,1,'Changed','app_id')"))
+    .rows,
+  [],
+);
+await assert.rejects(
+  scalar("select public.admin_assets_index(20,0,'ch','app_id')"),
+);
 const internal = await scalar("select public.admin_assets_index(20,0,$1,$2)", [
   "",
   "id",

@@ -133,6 +133,37 @@ const server = createServer(async (request, response) => {
     response.end(JSON.stringify(game));
     return;
   }
+  if (url.pathname === "/rest/v1/rpc/admin_assets_index") {
+    let content = "";
+    for await (const chunk of request) content += chunk;
+    const body = JSON.parse(content);
+    if (body.p_query === "timeout") {
+      response.statusCode = 500;
+      response.end(JSON.stringify({ code: "57014" }));
+      return;
+    }
+    const match =
+      !body.p_query ||
+      body.p_query === game.app_id ||
+      game.name.toLowerCase().includes(body.p_query.toLowerCase());
+    response.end(
+      JSON.stringify({
+        rows: match
+          ? [
+              {
+                game_id: game.app_id,
+                app_id: game.app_id,
+                game_name: game.name,
+                has_lua: true,
+                has_meta: false,
+              },
+            ]
+          : [],
+        total: match ? "1" : "0",
+      }),
+    );
+    return;
+  }
   if (url.pathname === "/rest/v1/rpc/admin_library_games") {
     let content = "";
     for await (const chunk of request) content += chunk;

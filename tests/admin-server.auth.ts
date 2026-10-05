@@ -175,6 +175,18 @@ test("production operator login protects mutations and hashes user passwords on 
   const timedOut = await page.request.get("/api/admin/games?q=timeout");
   expect(timedOut.status()).toBe(502);
   expect((await timedOut.json()).error).toContain("migration 004");
+  for (const query of ["elden", "1245620"]) {
+    const asset = await page.request.get(`/api/admin/assets?q=${query}`);
+    expect(asset.status()).toBe(200);
+    const result = await asset.json();
+    expect(result.rows[0].game_id).toBe("1245620");
+    expect(result.total).toBe(1);
+    expect(result.rows[0]).not.toHaveProperty("lua_data");
+  }
+  expect((await page.request.get("/api/admin/assets?q=el")).status()).toBe(400);
+  const assetTimeout = await page.request.get("/api/admin/assets?q=timeout");
+  expect(assetTimeout.status()).toBe(502);
+  expect((await assetTimeout.json()).error).toContain("006");
   await page.getByRole("button", { name: "Edit 1" }).click();
   await page
     .getByRole("dialog")

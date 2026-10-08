@@ -137,6 +137,7 @@ export const entities: Record<Entity, EntitySpec> = {
     select:
       "user_id::text,email,access_role_code,access_role_name,is_verified,free_claim_game,machine_info,created_at,updated_at",
     order: "user_id.desc",
+    create: true,
     edit: true,
     columns: [
       ["email", "User"],

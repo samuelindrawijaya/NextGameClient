@@ -143,25 +143,15 @@ test("user support actions and versions work without storing passwords", async (
   page,
 }) => {
   await page.goto("/admin/users");
-  await page.evaluate(() => {
-    const store = JSON.parse(
-      localStorage.getItem("nextgame-admin-preview-v1")!,
-    );
-    store.users = [
-      {
-        user_id: "1",
-        email: "support@example.test",
-        access_role_code: 1,
-        access_role_name: "user",
-        is_verified: false,
-        free_claim_game: 0,
-        machine_info: "machine-A",
-      },
-    ];
-    localStorage.setItem("nextgame-admin-preview-v1", JSON.stringify(store));
-  });
+  await page.getByRole("button", { name: "Add User" }).click();
+  const createDialog = page.getByRole("dialog");
+  await createDialog.getByLabel("Email", { exact: true }).fill("support@example.test");
+  await createDialog.getByLabel("New password").fill("temporary-password-123");
+  await createDialog.getByLabel("Machine info").fill("machine-A");
+  await createDialog.getByRole("button", { name: "Tambah record" }).click();
+  await expect(createDialog).not.toBeVisible();
   await page.reload();
-  await expect(page.getByRole("button", { name: "Add User" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Add User" })).toBeVisible();
   await expect(page.locator("tbody")).toContainText("support@example.test");
   await page.getByRole("button", { name: "View 1" }).click();
   await page.getByRole("button", { name: "Verify user" }).click();

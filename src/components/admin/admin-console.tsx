@@ -601,11 +601,13 @@ export default function AdminConsole({
                       ? "Asset"
                       : entity === "libraries"
                         ? "Library"
-                        : entity === "admins"
-                          ? "Admin"
-                          : entity === "transactions"
-                          ? "Transaction"
-                          : "Version"}
+                        : entity === "users"
+                          ? "User"
+                          : entity === "admins"
+                            ? "Admin"
+                            : entity === "transactions"
+                              ? "Transaction"
+                              : "Version"}
                   <span>
                     <ArrowUpRight size={16} weight="light" />
                   </span>

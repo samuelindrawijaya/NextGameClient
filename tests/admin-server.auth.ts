@@ -180,13 +180,33 @@ test("production operator login protects mutations and hashes user passwords on 
     expect(asset.status()).toBe(200);
     const result = await asset.json();
     expect(result.rows[0].game_id).toBe("1245620");
-    expect(result.total).toBe(1);
+    expect(result.total).toBeNull();
+    expect(result.hasMore).toBe(false);
     expect(result.rows[0]).not.toHaveProperty("lua_data");
   }
   expect((await page.request.get("/api/admin/assets?q=el")).status()).toBe(400);
   const assetTimeout = await page.request.get("/api/admin/assets?q=timeout");
   expect(assetTimeout.status()).toBe(502);
   expect((await assetTimeout.json()).error).toContain("006");
+  await page.goto("/admin/assets");
+  await expect(page.locator("tbody tr")).toHaveCount(20);
+  await expect(
+    page.getByRole("button", { name: "Halaman berikutnya" }),
+  ).toBeEnabled();
+  const nextRequest = page.waitForRequest(
+    (request) =>
+      request.url().includes("/api/admin/assets?") &&
+      request.url().includes("before_id="),
+  );
+  await page.getByRole("button", { name: "Halaman berikutnya" }).click();
+  await nextRequest;
+  await expect(page.locator("tbody tr")).toHaveCount(3);
+  await expect(
+    page.getByRole("button", { name: "Halaman berikutnya" }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "Halaman sebelumnya" }).click();
+  await expect(page.locator("tbody tr")).toHaveCount(20);
+  await page.goto("/admin/games");
   await page.getByRole("button", { name: "Edit 1" }).click();
   await page
     .getByRole("dialog")

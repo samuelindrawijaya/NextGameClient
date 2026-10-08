@@ -95,6 +95,8 @@ Preview lokal hanya mensimulasikan daftar/add/edit akun admin; login akun tambah
 
 ### Perilaku data
 
+Pencarian Game Assets versi cepat memakai migration `202610050007_asset_fast_page.sql` setelah 006. RPC mengambil satu halaman ditambah satu record untuk menentukan tombol Next, tanpa COUNT seluruh hasil. UI memakai cursor game_id untuk Next/Previous dan menampilkan jumlah record pada halaman, bukan total seluruh hasil. AppID tetap exact, nama tetap substring dengan index trigram 004; fuzzy tidak diaktifkan. RPC lama admin_assets_index tetap tersedia untuk konsumen yang membutuhkan total exact. Migration 007 belum diterapkan ke Supabase live oleh agent.
+
 Untuk pencarian Game Assets, terapkan `supabase/migrations/202610050006_asset_search.sql` setelah migration 004. RPC memisahkan AppID exact dari pencarian nama, menghilangkan cast ID ke teks dan kondisi OR, serta menghitung daftar tanpa join saat tidak ada pencarian. Pencarian nama memakai index trigram migration 004; minimal 3 karakter. Fungsi mempertahankan paging, total exact, pilihan mapping asset, dan tidak mengirim bytea. Migration 006 belum diterapkan ke Supabase live oleh agent.
 
 Untuk katalog besar, jalankan `supabase/migrations/202610050004_game_search_index.sql` di SQL Editor Supabase. Migration menambahkan index GIN pg_trgm untuk pencarian nama dan memperbarui statistik; tidak mengubah record game. Pencarian angka menggunakan Steam AppID secara langsung. Nama memerlukan minimal 3 karakter. Pemilih game pada Add Library mengambil 8 hasil tanpa menghitung total katalog. Redeploy setelah kode diperbarui. Index ini belum diterapkan ke Supabase live oleh agent.

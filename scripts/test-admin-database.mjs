@@ -65,6 +65,15 @@ const assetSearchMigration = await readFile(
 );
 await db.exec(assetSearchMigration);
 await db.exec(assetSearchMigration);
+const fastAssetMigration = await readFile(
+  new URL(
+    "../supabase/migrations/202610050007_asset_fast_page.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
+await db.exec(fastAssetMigration);
+await db.exec(fastAssetMigration);
 const scalar = async (sql, args = []) =>
   Object.values((await db.query(sql, args)).rows[0])[0];
 const change = async (entity, action, id, data) =>
@@ -148,6 +157,36 @@ const exact = await scalar("select public.admin_assets_index(1,0,$1,$2,$3)", [
 ]);
 assert.equal(exact.rows.length, 1);
 assert.equal(exact.rows[0].game_id, game.app_id);
+await db.exec("insert into game_assets(game_id) values(99999999)");
+const firstAssetPage = await scalar(
+  "select admin_assets_page(1,0,'','app_id')",
+);
+assert.equal(firstAssetPage.total, null);
+assert.equal(firstAssetPage.has_more, true);
+assert.equal(firstAssetPage.next_cursor, game.app_id);
+assert.equal(firstAssetPage.rows.length, 1);
+const secondAssetPage = await scalar(
+  "select admin_assets_page(1,0,'','app_id',null,$1)",
+  [firstAssetPage.next_cursor],
+);
+assert.equal(secondAssetPage.rows[0].game_id, "99999999");
+assert.equal(secondAssetPage.rows[0].game_name, null);
+assert.equal(secondAssetPage.rows[0].has_lua, false);
+assert.equal(secondAssetPage.has_more, false);
+assert.equal(secondAssetPage.next_cursor, null);
+const searchedAssetPage = await scalar(
+  "select admin_assets_page(20,0,'Changed','app_id')",
+);
+assert.equal(searchedAssetPage.rows[0].game_id, game.app_id);
+assert.equal(searchedAssetPage.has_more, false);
+assert.equal("lua_data" in searchedAssetPage.rows[0], false);
+const exactAssetPage = await scalar(
+  "select admin_assets_page(1,0,'','app_id',$1)",
+  [game.app_id],
+);
+assert.equal(exactAssetPage.rows[0].game_id, game.app_id);
+assert.equal(exactAssetPage.has_more, false);
+await db.exec("delete from game_assets where game_id=99999999");
 const numericAsset = await scalar(
   "select public.admin_assets_index(20,0,$1,'app_id')",
   [game.app_id],

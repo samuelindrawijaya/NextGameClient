@@ -37,6 +37,7 @@ export async function GET(request: Request, ctx: Context) {
           gameId: url.searchParams.get("game_id") || undefined,
           lookup: url.searchParams.get("lookup") === "true",
           assetsOnly: url.searchParams.get("assets_only") === "true",
+          beforeId: url.searchParams.get("before_id") || undefined,
         },
       ),
     );

@@ -193,6 +193,9 @@ export default function AdminConsole({
   const [ready, setReady] = useState(false);
   const [liveRows, setLiveRows] = useState<Row[]>([]);
   const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState<boolean | null>(null);
+  const assetCursors = useRef(new Map<number, string>());
+  const assetCursorQuery = useRef("");
   const [summary, setSummary] = useState<Row>({});
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -247,6 +250,10 @@ export default function AdminConsole({
   }, [store, ready, mode]);
   useEffect(() => {
     if (mode !== "live") return;
+    if (assetCursorQuery.current !== query) {
+      assetCursors.current.clear();
+      assetCursorQuery.current = query;
+    }
     const controller = new AbortController();
     const timer = setTimeout(
       async () => {
@@ -254,7 +261,7 @@ export default function AdminConsole({
         setError("");
         try {
           const response = await fetch(
-            `/api/admin/${entity || "dashboard"}?page=${page}&q=${encodeURIComponent(query)}`,
+            `/api/admin/${entity || "dashboard"}?page=${page}&q=${encodeURIComponent(query)}${entity === "assets" && assetCursors.current.has(page) ? `&before_id=${assetCursors.current.get(page)}` : ""}`,
             { signal: controller.signal },
           );
           const data = await response.json();
@@ -262,7 +269,10 @@ export default function AdminConsole({
           if (!response.ok) throw new Error(data.error);
           if (entity) {
             setLiveRows(data.rows);
-            setTotal(data.total);
+            setTotal(data.total ?? data.rows.length);
+            setHasMore(typeof data.hasMore === "boolean" ? data.hasMore : null);
+            if (entity === "assets" && data.nextCursor)
+              assetCursors.current.set(page + 1, data.nextCursor);
           } else setSummary(data);
         } catch (error) {
           if (!controller.signal.aborted)
@@ -840,6 +850,9 @@ export default function AdminConsole({
                       </span>
                       <strong>
                         {loading ? "…" : count.toLocaleString("id-ID")} records
+                        {mode === "live" && hasMore !== null
+                          ? " di halaman ini"
+                          : ""}
                       </strong>
                     </div>
                     <div>
@@ -997,8 +1010,11 @@ export default function AdminConsole({
                   )}
                   <div className={styles.pagination}>
                     <span>
-                      Halaman {page} / {Math.max(1, Math.ceil(count / 20))} · 20
-                      per halaman
+                      Halaman {page}
+                      {mode === "live" && hasMore !== null
+                        ? ""
+                        : ` / ${Math.max(1, Math.ceil(count / 20))}`}{" "}
+                      · 20 per halaman
                     </span>
                     <div>
                       <button
@@ -1010,7 +1026,11 @@ export default function AdminConsole({
                       </button>
                       <button
                         aria-label="Halaman berikutnya"
-                        disabled={page * 20 >= count || loading}
+                        disabled={
+                          (mode === "live" && hasMore !== null
+                            ? !hasMore
+                            : page * 20 >= count) || loading
+                        }
                         onClick={() => setPage((value) => value + 1)}
                       >
                         <CaretRight size={17} />

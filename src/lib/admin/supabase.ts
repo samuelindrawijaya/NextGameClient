@@ -33,16 +33,19 @@ export async function database(path: string, init: RequestInit = {}) {
         : code === "23505"
           ? "ID, email, invoice, atau version sudah ada."
           : code === "PGRST202"
-            ? path === "rpc/admin_library_games"
-              ? "Pemilih game dengan asset belum tersedia. Terapkan migration 005 terlebih dahulu."
-              : "RPC admin belum tersedia. Terapkan migration admin terlebih dahulu."
+            ? path === "rpc/admin_assets_page"
+              ? "Pencarian asset cepat belum tersedia. Terapkan migration 007 terlebih dahulu."
+              : path === "rpc/admin_library_games"
+                ? "Pemilih game dengan asset belum tersedia. Terapkan migration 005 terlebih dahulu."
+                : "RPC admin belum tersedia. Terapkan migration admin terlebih dahulu."
             : code === "P0002"
               ? "Record tidak ditemukan."
               : code === "PGA01"
                 ? "Game belum memiliki asset berisi data. Tambahkan asset sebelum memberikan game ke library."
                 : code === "57014"
-                  ? path === "rpc/admin_assets_index"
-                    ? "Pencarian asset melewati batas waktu. Terapkan migration 004 dan 006 untuk mempercepat pencarian."
+                  ? path === "rpc/admin_assets_index" ||
+                    path === "rpc/admin_assets_page"
+                    ? "Pencarian asset melewati batas waktu. Terapkan migration 004, 006, dan 007 untuk mempercepat pencarian."
                     : "Pencarian database melewati batas waktu. Terapkan migration 004 untuk index pencarian game."
                   : "Operasi database gagal. Periksa schema, izin server, dan migration admin.",
       code === "23503" || code === "23505" || code === "PGA01" ? 409 : 502,
@@ -68,6 +71,7 @@ export async function readRows(
     gameId?: string;
     lookup?: boolean;
     assetsOnly?: boolean;
+    beforeId?: string;
   } = {},
 ) {
   const spec = entities[entity];
@@ -106,16 +110,19 @@ export async function readRows(
         "Tentukan ADMIN_ASSET_ID_KIND=app_id atau id sesuai makna game_assets.game_id.",
         503,
       );
-    const result = await rpc("admin_assets_index", {
+    const result = await rpc("admin_assets_page", {
       p_limit: oneId ? 1 : limit,
       p_offset: oneId ? 0 : (page - 1) * limit,
       p_query: oneId ? "" : query,
       p_id_kind: kind,
       p_exact_id: oneId ? positiveId(oneId) : null,
+      p_before_id: filters.beforeId ? positiveId(filters.beforeId) : null,
     });
     return {
       rows: result.rows || [],
-      total: Number(result.total || 0),
+      total: null,
+      hasMore: Boolean(result.has_more),
+      nextCursor: result.next_cursor || null,
       page,
       pageSize: limit,
     };

@@ -133,7 +133,7 @@ const server = createServer(async (request, response) => {
     response.end(JSON.stringify(game));
     return;
   }
-  if (url.pathname === "/rest/v1/rpc/admin_assets_index") {
+  if (url.pathname === "/rest/v1/rpc/admin_assets_page") {
     let content = "";
     for await (const chunk of request) content += chunk;
     const body = JSON.parse(content);
@@ -142,24 +142,43 @@ const server = createServer(async (request, response) => {
       response.end(JSON.stringify({ code: "57014" }));
       return;
     }
-    const match =
-      !body.p_query ||
-      body.p_query === game.app_id ||
-      game.name.toLowerCase().includes(body.p_query.toLowerCase());
+    let rows = [
+      {
+        game_id: game.app_id,
+        app_id: game.app_id,
+        game_name: game.name,
+        has_lua: true,
+        has_meta: false,
+      },
+      ...Array.from({ length: 22 }, (_, i) => ({
+        game_id: String(20000 - i),
+        app_id: String(20000 - i),
+        game_name: "Fixture asset " + i,
+        has_lua: true,
+        has_meta: false,
+      })),
+    ];
+    if (body.p_exact_id)
+      rows = rows.filter((row) => row.game_id === body.p_exact_id);
+    else if (body.p_query)
+      rows = rows.filter((row) =>
+        /^\d+$/.test(body.p_query)
+          ? row.game_id === body.p_query
+          : row.game_name.toLowerCase().includes(body.p_query.toLowerCase()),
+      );
+    if (body.p_before_id)
+      rows = rows.filter(
+        (row) => BigInt(row.game_id) < BigInt(body.p_before_id),
+      );
+    else rows = rows.slice(body.p_offset);
+    const more = rows.length > body.p_limit;
+    rows = rows.slice(0, body.p_limit);
     response.end(
       JSON.stringify({
-        rows: match
-          ? [
-              {
-                game_id: game.app_id,
-                app_id: game.app_id,
-                game_name: game.name,
-                has_lua: true,
-                has_meta: false,
-              },
-            ]
-          : [],
-        total: match ? "1" : "0",
+        rows,
+        total: null,
+        has_more: more,
+        next_cursor: more ? rows.at(-1).game_id : null,
       }),
     );
     return;

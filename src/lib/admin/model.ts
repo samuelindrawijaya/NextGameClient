@@ -215,9 +215,19 @@ export const entities: Record<Entity, EntitySpec> = {
     select:
       "id::text,invoice_number,user_id::text,platform,game_id::text,is_processed,is_invoice_used,created_at,updated_at",
     order: "id.desc",
+    create: true,
     edit: true,
+    remove: true,
     fields: [
       { key: "user_id", label: "User ID", type: "id" },
+      { key: "game_id", label: "Game ID", type: "id" },
+      {
+        key: "invoice_number",
+        label: "Invoice number",
+        type: "text",
+        required: true,
+      },
+      { key: "platform", label: "Platform", type: "text" },
       {
         key: "is_processed",
         label: "Processed",
@@ -230,13 +240,31 @@ export const entities: Record<Entity, EntitySpec> = {
         type: "boolean",
         default: false,
       },
+      {
+        key: "game_id",
+        label: "Game ID",
+        type: "id",
+        required: true,
+      },
+      {
+        key: "is_procces",
+        label: "Processed",
+        type: "boolean",
+        default: false,
+      },
+      {
+        key: "platform",
+        label: "Platform",
+        type: "text",
+        default: "manual",
+      },
     ],
     columns: [
       ["invoice_number", "Invoice"],
       ["user_email", "User"],
       ["platform", "Platform"],
       ["game_name", "Game"],
-      ["is_processed", "Processed"],
+      ["is_procces", "Processed"],
       ["is_invoice_used", "Invoice used"],
       ["created_at", "Created"],
     ],

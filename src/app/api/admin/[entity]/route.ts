@@ -143,6 +143,60 @@ async function mutate(
       });
       return NextResponse.json({ ok: true, record });
     }
+    if (entity === "transactions" && action === "INSERT") {
+      // Direct REST insert (bypass admin_apply_change since columns may not exist yet)
+      const base = process.env.SUPABASE_URL;
+      const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (!base || !key) throw new AdminError("Supabase admin belum dikonfigurasi.", 503);
+      const response = await fetch(new URL("/rest/v1/history_purchase", base), {
+        method: "POST",
+        cache: "no-store",
+        signal: AbortSignal.timeout(15_000),
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+          Prefer: "return=representation",
+        },
+        body: JSON.stringify({
+          user_id: data.user_id,
+          game_id: data.game_id,
+          invoice_number: data.invoice_number,
+          platform: data.platform || "manual",
+          is_procces: data.is_procces ?? false,
+          is_invoice_used: data.is_invoice_used ?? false,
+        }),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        const code = String(error.code || "");
+        if (code === "PGRST104" || code === "42703")
+          throw new AdminError("Kolom transaksi belum ada di database. Jalankan migration 202610080003 terlebih dahulu.", 502);
+        throw new AdminError("Gagal menyimpan transaksi: " + (error.message || error.details || response.statusText));
+      }
+      const [record] = await response.json();
+      // Log audit
+      try {
+        await fetch(new URL("/rest/v1/audit_logs", base), {
+          method: "POST",
+          cache: "no-store",
+          signal: AbortSignal.timeout(10_000),
+          headers: {
+            apikey: key,
+            Authorization: `Bearer ${key}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            actor_user_id: session.actorId,
+            action: "INSERT",
+            entity: "transactions",
+            entity_id: String(record.id),
+            new_data: { record, operator: session.email },
+          }),
+        });
+      } catch {}
+      return NextResponse.json({ ok: true, record });
+    }
     const result = await rpc("admin_apply_change", {
       p_entity: entity,
       p_action: action,

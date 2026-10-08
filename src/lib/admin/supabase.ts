@@ -243,42 +243,52 @@ export async function readRows(
   };
 }
 export async function dashboard() {
-  const count = async (entity: Entity, extra = "") => {
-    const spec = entities[entity];
-    const r = await database(`${spec.table}?select=${spec.pk}${extra}`, {
-      method: "HEAD",
-      headers: { Prefer: "count=exact" },
-    });
-    return Number(r.headers.get("content-range")?.split("/").at(-1) || 0);
-  };
-  const [
-    users,
-    verified,
-    games,
-    assets,
-    transactions,
-    pending,
-    sync,
-    versions,
-  ] = await Promise.all([
-    count("users"),
-    count("users", "&is_verified=eq.true"),
-    count("games"),
-    count("assets"),
-    count("transactions"),
-    count("transactions", "&is_processed=eq.false"),
+  let counts: Record<string, number> = {};
+  try {
+    counts = await rpc("admin_count_dashboard", {});
+  } catch {
+    // fallback jika RPC belum tersedia
+    const count = async (entity: Entity, extra = "") => {
+      const spec = entities[entity];
+      const r = await database(`${spec.table}?select=${spec.pk}${extra}`, {
+        method: "HEAD",
+        headers: { Prefer: "count=exact" },
+      });
+      return Number(r.headers.get("content-range")?.split("/").at(-1) || 0);
+    };
+    const [users, verified, games, assets, transactions, pending] =
+      await Promise.all([
+        count("users"),
+        count("users", "&is_verified=eq.true"),
+        count("games"),
+        count("assets"),
+        count("transactions"),
+        count("transactions", "&is_processed=eq.false"),
+      ]);
+    counts = {
+      users,
+      verified,
+      unverified: users - verified,
+      games,
+      assets,
+      transactions,
+      pending,
+      completed: transactions - pending,
+    };
+  }
+  const [sync, versions] = await Promise.all([
     readRows("sync"),
     readRows("versions"),
   ]);
   return {
-    users,
-    verified,
-    unverified: users - verified,
-    games,
-    assets,
-    transactions,
-    pending,
-    completed: transactions - pending,
+    users: counts.users,
+    verified: counts.verified,
+    unverified: counts.unverified,
+    games: counts.games,
+    assets: counts.assets,
+    transactions: counts.transactions,
+    pending: counts.pending,
+    completed: counts.completed,
     lastSync: sync.rows[0] || null,
     currentVersion: versions.rows[0] || null,
   };

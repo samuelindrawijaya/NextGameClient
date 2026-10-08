@@ -52,6 +52,7 @@ import { useMotionPreference } from "@/lib/use-motion-preference";
 import reference from "@/data/admin-reference.json";
 import RecordEditor from "./record-editor";
 import LibraryEditor from "./library-editor";
+import TransactionEditor from "./transaction-editor";
 import ImportWorkspace from "./import-workspace";
 import styles from "./admin.module.css";
 
@@ -89,6 +90,10 @@ type Modal = {
   record: Row | null;
 };
 const key = "nextgame-admin-preview-v1";
+const fmt = (n: Json) =>
+  typeof n !== "number"
+    ? "—"
+    : n.toLocaleString("id-ID");
 const display = (value: Json | undefined): string =>
   value === null || value === undefined || value === ""
     ? "—"
@@ -588,6 +593,8 @@ export default function AdminConsole({
                         ? "Library"
                         : entity === "admins"
                           ? "Admin"
+                          : entity === "transactions"
+                          ? "Transaction"
                           : "Version"}
                   <span>
                     <ArrowUpRight size={16} weight="light" />
@@ -613,26 +620,26 @@ export default function AdminConsole({
                 {[
                   {
                     label: "Games in catalog",
-                    value: data.games,
+                    value: fmt(data.games),
                     detail: "Steam App IDs",
                     icon: GameController,
                   },
                   {
                     label: "Registered users",
-                    value: data.users,
-                    detail: `${data.verified ?? "—"} verified · ${data.unverified ?? "—"} unverified`,
+                    value: fmt(data.users),
+                    detail: `${fmt(data.verified)} verified · ${fmt(data.unverified)} unverified`,
                     icon: Users,
                   },
                   {
                     label: "Game assets",
-                    value: data.assets,
+                    value: fmt(data.assets),
                     detail: "Encrypted payloads",
                     icon: Stack,
                   },
                   {
                     label: "Transactions",
-                    value: data.transactions,
-                    detail: `${data.pending ?? "—"} pending · ${data.completed ?? "—"} completed`,
+                    value: fmt(data.transactions),
+                    detail: `${fmt(data.pending)} pending · ${fmt(data.completed)} completed`,
                     icon: Receipt,
                   },
                 ].map((metric) => (
@@ -642,7 +649,7 @@ export default function AdminConsole({
                       <metric.icon size={24} weight="light" />
                     </div>
                     <strong className={styles.metricValue}>
-                      {loading ? "…" : display(metric.value)}
+                      {loading ? "…" : metric.value}
                     </strong>
                     <small>{metric.detail}</small>
                   </Frame>
@@ -1089,8 +1096,23 @@ export default function AdminConsole({
                   )
                 }
               />
-            ) : (
-              <RecordEditor
+            ) : modal.entity === "transactions" ? (
+                <TransactionEditor
+                  record={modal.record}
+                  mode={mode}
+                  store={store}
+                  busy={busy}
+                  onSave={(data) =>
+                    change(
+                      "transactions",
+                      modal.record ? "UPDATE" : "INSERT",
+                      modal.record,
+                      data,
+                    )
+                  }
+                />
+              ) : (
+                <RecordEditor
                 entity={modal.entity}
                 record={modal.record}
                 busy={busy}

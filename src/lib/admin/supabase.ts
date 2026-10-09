@@ -110,14 +110,47 @@ export async function readRows(
         "Tentukan ADMIN_ASSET_ID_KIND=app_id atau id sesuai makna game_assets.game_id.",
         503,
       );
-    const result = await rpc("admin_assets_page", {
-      p_limit: oneId ? 1 : limit,
-      p_offset: oneId ? 0 : (page - 1) * limit,
-      p_query: oneId ? "" : query,
-      p_id_kind: kind,
-      p_exact_id: oneId ? positiveId(oneId) : null,
-      p_before_id: filters.beforeId ? positiveId(filters.beforeId) : null,
-    });
+    let result = { rows: [], has_more: false, next_cursor: null } as any;
+    try {
+      result = await rpc("admin_assets_page", {
+        p_limit: oneId ? 1 : limit,
+        p_offset: oneId ? 0 : (page - 1) * limit,
+        p_query: oneId ? "" : query,
+        p_id_kind: kind,
+        p_exact_id: oneId ? positiveId(oneId) : null,
+        p_before_id: filters.beforeId ? positiveId(filters.beforeId) : null,
+      });
+    } catch {
+      // Fallback ke query REST biasa
+      const params = new URLSearchParams({
+        select: "game_id::text,encryption_version,created_at,updated_at",
+        order: "game_id.desc",
+        limit: String(oneId ? 1 : limit),
+        offset: String(oneId ? 0 : (page - 1) * limit),
+      });
+      if (oneId) params.set("game_id", `eq.${positiveId(oneId)}`);
+      const resp = await database(`game_assets?${params}`, {
+        headers: { Prefer: "count=exact" },
+      });
+      const rows = await resp.json();
+      return {
+        rows: rows.map((r: any) => ({
+          game_id: r.game_id,
+          encryption_version: r.encryption_version,
+          created_at: r.created_at,
+          updated_at: r.updated_at,
+          app_id: r.game_id,
+          game_name: "(sync for names)",
+          has_lua: false,
+          has_meta: false,
+        })),
+        total: Number(
+          resp.headers.get("content-range")?.split("/").at(-1) || rows.length,
+        ),
+        page,
+        pageSize: limit,
+      };
+    }
     return {
       rows: result.rows || [],
       total: null,
@@ -177,13 +210,22 @@ export async function readRows(
       clauses.push(`${spec.pk}.eq.${positiveId(text)}`);
     if (clauses.length) params.set("or", `(${clauses.join(",")})`);
   }
+  if (entity === "games" && !q.trim()) {
+    // Estimasi count via pg_class (hindari timeout)
+    const est = await rpc("admin_count_estimate_games", {});
+    total = Number(est?.games || 0);
+  }
+  const countHeader: Record<string, string> =
+    entity === "games" && !q.trim() ? {} : filters.lookup ? {} : { Prefer: "count=exact" };
   const response = await database(`${spec.table}?${params}`, {
-    headers: filters.lookup ? {} : { Prefer: "count=exact" },
+    headers: countHeader,
   });
   rows = await response.json();
-  total = Number(
-    response.headers.get("content-range")?.split("/").at(-1) || rows.length,
-  );
+  if (entity !== "games" || q.trim()) {
+    total = Number(
+      response.headers.get("content-range")?.split("/").at(-1) || rows.length,
+    );
+  }
   if (entity === "libraries" || entity === "transactions") {
     const gameKey = entity === "libraries" ? "app_id_buy" : "game_id";
     const gameIds = rows

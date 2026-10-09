@@ -22,12 +22,11 @@ begin
     when 'assets' then t := 'game_assets'; pk := 'game_id'; allowed := array['game_id','lua_data','meta_data','encryption_version'];
     when 'users' then t := 'user'; pk := 'user_id'; allowed := array['email','password_hash','access_role_code','access_role_name','is_verified','free_claim_game','machine_info'];
     when 'versions' then t := 'version_apps'; pk := 'id'; allowed := array['version'];
-    when 'transactions' then t := 'history_purchase'; pk := 'id'; allowed := array['is_procces'];
+    when 'transactions' then t := 'history_purchase'; pk := 'id'; allowed := array['user_id','game_id','invoice_number','platform','is_procces','is_invoice_used'];
     else raise exception 'Unsupported entity';
   end case;
   if p_action not in ('INSERT','UPDATE','DELETE') then raise exception 'Unsupported action'; end if;
   if p_entity = 'users' and p_action = 'DELETE' then raise exception 'User deletion policy is not configured'; end if;
-  if p_entity = 'transactions' and (p_action <> 'UPDATE' or p_data <> '{"is_procces":true}'::jsonb) then raise exception 'Only mark processed is supported'; end if;
   if jsonb_typeof(p_data) <> 'object' then raise exception 'Data must be an object'; end if;
   select array_agg(key order by key) into fields from jsonb_object_keys(p_data) as x(key);
   foreach k in array coalesce(fields,array[]::text[]) loop

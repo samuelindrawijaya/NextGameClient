@@ -168,7 +168,7 @@ export const entities: Record<Entity, EntitySpec> = {
         key: "is_verified",
         label: "Verified",
         type: "boolean",
-        default: false,
+        default: true,
       },
       {
         key: "free_claim_game",
@@ -497,6 +497,11 @@ export function validate(
   }
   if (creating && (entity === "users" || entity === "admins") && !out.password)
     throw new Error("Temporary password wajib diisi.");
+  if (creating && entity === "users") {
+    // Registration is password-only; initialize the Worker machine record.
+    out.is_verified = true;
+    out.machine_info ??= "{}";
+  }
   if (!creating && entity === "assets") delete out.game_id;
   if (!Object.keys(out).length)
     throw new Error("Tidak ada perubahan yang valid.");

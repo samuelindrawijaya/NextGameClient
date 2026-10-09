@@ -215,9 +215,10 @@ export async function readRows(
     const est = await rpc("admin_count_estimate_games", {});
     total = Number(est?.games || 0);
   }
-  const countHeader = entity === "games" && !q.trim() ? {} : { Prefer: "count=exact" };
+  const countHeader: Record<string, string> =
+    entity === "games" && !q.trim() ? {} : filters.lookup ? {} : { Prefer: "count=exact" };
   const response = await database(`${spec.table}?${params}`, {
-    headers: { ...countHeader, ...(filters.lookup ? {} : {}) },
+    headers: countHeader,
   });
   rows = await response.json();
   if (entity !== "games" || q.trim()) {

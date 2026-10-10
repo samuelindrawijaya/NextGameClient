@@ -220,15 +220,15 @@ export const entities: Record<Entity, EntitySpec> = {
     edit: true,
     remove: true,
     fields: [
-      { key: "user_id", label: "User ID", type: "id", required: true },
-      { key: "game_id", label: "Game ID", type: "id", required: true },
+      { key: "user_id", label: "User ID", type: "id" },
+      { key: "game_id", label: "Game ID", type: "id" },
       {
         key: "invoice_number",
         label: "Invoice number",
         type: "text",
         required: true,
       },
-      { key: "platform", label: "Platform", type: "text", default: "manual" },
+      { key: "platform", label: "Platform", type: "text" },
       {
         key: "is_processed",
         label: "Processed",
@@ -242,10 +242,22 @@ export const entities: Record<Entity, EntitySpec> = {
         default: false,
       },
       {
-        key: "is_all_access",
-        label: "All access",
+        key: "game_id",
+        label: "Game ID",
+        type: "id",
+        required: true,
+      },
+      {
+        key: "is_procces",
+        label: "Processed",
         type: "boolean",
         default: false,
+      },
+      {
+        key: "platform",
+        label: "Platform",
+        type: "text",
+        default: "manual",
       },
     ],
     columns: [
@@ -255,7 +267,6 @@ export const entities: Record<Entity, EntitySpec> = {
       ["game_name", "Game"],
       ["is_procces", "Processed"],
       ["is_invoice_used", "Invoice used"],
-      ["is_all_access", "All access"],
       ["created_at", "Created"],
     ],
   },
@@ -494,9 +505,5 @@ export function validate(
   if (!creating && entity === "assets") delete out.game_id;
   if (!Object.keys(out).length)
     throw new Error("Tidak ada perubahan yang valid.");
-  // All access: game_id boleh null, skip required check
-  if (out.is_all_access === true) {
-    delete out.game_id;
-  }
   return out;
 }

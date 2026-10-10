@@ -233,6 +233,9 @@ export default function TransactionEditor({
   const [isInvoiceUsed, setIsInvoiceUsed] = useState(
     record ? Boolean(record.is_invoice_used) : false,
   );
+  const [isAllAccess, setIsAllAccess] = useState(
+    record ? Boolean(record.is_all_access) : false,
+  );
   const [error, setError] = useState("");
 
   return (
@@ -243,7 +246,7 @@ export default function TransactionEditor({
         setError("");
         try {
           if (!user) throw new Error("Pilih pengguna terlebih dahulu.");
-          if (!game) throw new Error("Pilih game terlebih dahulu.");
+          if (!isAllAccess && !game) throw new Error("Pilih game terlebih dahulu.");
           if (!invoiceNumber.trim())
             throw new Error("Nomor invoice wajib diisi.");
           await onSave(
@@ -251,11 +254,12 @@ export default function TransactionEditor({
               "transactions",
               {
                 user_id: user.user_id,
-                game_id: game.id,
+                game_id: isAllAccess ? null : game!.id,
                 invoice_number: invoiceNumber.trim(),
                 platform,
                 is_procces: isProcessed,
                 is_invoice_used: isInvoiceUsed,
+                is_all_access: isAllAccess,
               },
               !record,
             ),
@@ -283,6 +287,11 @@ export default function TransactionEditor({
           store={store}
           assetsOnly={false}
         />
+        {isAllAccess && (
+          <p className={styles.hint} style={{ gridColumn: "1 / -1", margin: 0, fontSize: "0.85em", opacity: 0.6 }}>
+            All access aktif — game tidak perlu dipilih, tidak ada entri library yang dibuat.
+          </p>
+        )}
         <label className={styles.wide}>
           Nomor Invoice
           <input
@@ -330,6 +339,20 @@ export default function TransactionEditor({
                 onChange={(event) => setIsInvoiceUsed(event.target.checked)}
               />
               Invoice terpakai
+            </span>
+          </label>
+          <label>
+            <span className={styles.checkbox}>
+              <input
+                aria-label="All access (role 2/3)"
+                type="checkbox"
+                checked={isAllAccess}
+                onChange={(event) => {
+                  setIsAllAccess(event.target.checked);
+                  if (event.target.checked) setGame(null);
+                }}
+              />
+              All access
             </span>
           </label>
         </div>

@@ -1,5 +1,45 @@
 import { test, expect } from "@playwright/test";
 
+test("desktop preview cycles, pauses and opens Discord information", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const preview = page.locator(".desktop-preview");
+  await preview.scrollIntoViewIfNeeded();
+  const title = preview.locator(".dp-feature-copy h4");
+  const first = await title.textContent();
+  await expect(title).not.toHaveText(first!, { timeout: 8000 });
+  await preview.getByRole("button", { name: "Jeda slideshow" }).click();
+  const pausedTitle = await title.textContent();
+  await page.waitForTimeout(5500);
+  await expect(title).toHaveText(pausedTitle!);
+  await preview.getByRole("button", { name: "Game berikutnya" }).click();
+  await expect(title).not.toHaveText(pausedTitle!);
+  await preview.locator(".dp-sidebar").hover();
+  await expect
+    .poll(() =>
+      preview
+        .locator(".dp-sidebar")
+        .evaluate((el) => el.getBoundingClientRect().width),
+    )
+    .toBeGreaterThan(150);
+  await preview
+    .getByRole("button", { name: "Lihat game", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page
+    .locator("#request-game")
+    .getByRole("button", { name: "Undangan Discord segera tersedia" })
+    .click();
+  await expect(page.getByRole("dialog")).toContainText(
+    "channel Request Game di Discord",
+  );
+  await expect(page.getByRole("dialog")).toContainText(
+    "Undangan Discord tersedia nanti",
+  );
+});
+
 test("reduced-motion mobile stays usable", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -23,7 +63,7 @@ test("reduced-motion mobile stays usable", async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test("catalog filters, details, favorites and honest availability", async ({
+test("actual catalog filters, details and honest availability", async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -33,39 +73,34 @@ test("catalog filters, details, favorites and honest availability", async ({
     page.getByRole("heading", { name: "70.000+ Game. Satu Library." }),
   ).toBeVisible();
   await expect(page.locator(".game-shell")).toHaveCount(8);
-  await page.getByRole("button", { name: "Indie", exact: true }).click();
+  await page
+    .getByRole("combobox", { name: "Filter genre" })
+    .selectOption("Indie");
   await expect(page.locator(".game-shell")).toHaveCount(3);
-  await page.getByRole("button", { name: "Semua", exact: true }).click();
+  await page
+    .getByRole("combobox", { name: "Filter genre" })
+    .selectOption("all");
   await page.getByRole("searchbox", { name: "Cari game" }).fill("cyberpunk");
   await expect(page.locator(".game-shell")).toHaveCount(1);
-  await page
-    .getByRole("button", { name: "Simpan Cyberpunk 2077 ke favorit" })
-    .click();
-  await page.reload();
-  await page.getByRole("searchbox", { name: "Cari game" }).fill("1091500");
-  await expect(page.locator(".game-shell")).toHaveCount(1);
-  await expect(
-    page.getByRole("button", { name: "Hapus Cyberpunk 2077 dari favorit" }),
-  ).toBeVisible();
   await page
     .getByRole("searchbox", { name: "Cari game" })
     .fill("game-yang-tidak-ada");
   await expect(
-    page.getByRole("heading", { name: "Belum menemukan game-mu?" }),
+    page.getByRole("heading", { name: "Tidak ada judul yang cocok" }),
   ).toBeVisible();
   await page
     .locator(".empty-state")
     .getByRole("button", { name: "Request Game" })
     .click();
   await expect(page.getByRole("dialog")).toContainText(
-    "Request dikirim dari aplikasi",
+    "channel Request Game di Discord",
   );
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Reset pencarian" }).click();
+  await page.getByRole("button", { name: "Hapus semua filter" }).click();
   await page
     .locator(".game-shell")
     .filter({ hasText: "Cyberpunk 2077" })
-    .getByRole("button", { name: "View Game" })
+    .getByRole("button", { name: "Buka detail Cyberpunk 2077", exact: true })
     .click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(
@@ -99,16 +134,12 @@ test("catalog filters, details, favorites and honest availability", async ({
     .getByRole("link", { name: "Lihat Katalog" })
     .click();
   await expect(page.getByRole("dialog")).not.toBeVisible();
-  await page.getByRole("button", { name: "Contact Support" }).click();
+  await page.getByRole("button", { name: "Support via Discord" }).click();
   await expect(page.getByRole("dialog")).toContainText(
-    "Tiket bantuan dikirim dari aplikasi",
+    "channel Support Center di Discord",
   );
-  await page
-    .getByRole("dialog")
-    .getByRole("button", { name: "Download App" })
-    .click();
   await expect(page.getByRole("dialog")).toContainText(
-    "Tautan unduhan aplikasi belum tersedia",
+    "Undangan Discord tersedia nanti",
   );
   await page.keyboard.press("Escape");
   await expect(page.locator(".faq-item")).toHaveCount(18);
@@ -147,11 +178,11 @@ test("mobile navigation, accordion and viewport fit", async ({ page }) => {
   await expect(page.locator("#faq-answer-10")).toContainText("Coming Soon");
   await page
     .getByRole("button", {
-      name: "Apakah saya bisa melihat status tiket support?",
+      name: "Bagaimana saya mengikuti penanganan support?",
     })
     .click();
   await expect(page.locator("#faq-answer-17")).toContainText(
-    "Open, In Progress, Resolved, dan Closed",
+    "channel support Discord",
   );
   const fits = await page.evaluate(
     () => document.documentElement.scrollWidth <= window.innerWidth,

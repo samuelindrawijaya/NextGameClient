@@ -8,7 +8,6 @@ import {
   ArrowRight,
   Heart,
   MagnifyingGlass,
-  GameController,
   Check,
   Plus,
   X,
@@ -17,12 +16,9 @@ import {
   SquaresFour,
   Books,
   DownloadSimple,
-  Play,
   ArrowsClockwise,
   HardDrives,
-  Globe,
   CheckCircle,
-  Trash,
   ShieldCheck,
   ChatCircle,
   Headset,
@@ -31,6 +27,7 @@ import type { CatalogStats } from "@/lib/catalog-stats";
 import type { Game } from "@/lib/game";
 import { useMotionPreference } from "@/lib/use-motion-preference";
 import CatalogDiscovery from "./catalog-discovery";
+import AppPreview from "./desktop-app-preview";
 import {
   faq,
   requestStatuses,
@@ -117,155 +114,6 @@ function Reveal({
     >
       {children}
     </motion.div>
-  );
-}
-
-function AppPreview({
-  games,
-  onAction,
-}: {
-  games: Game[];
-  onAction: () => void;
-}) {
-  const [selected, setSelected] = useState(0);
-  const reduced = useMotionPreference();
-  const game = games[selected];
-  return (
-    <div className="app-shell">
-      <div className="app-window">
-        <div className="app-titlebar">
-          <div className="window-dots">
-            <i />
-            <i />
-            <i />
-          </div>
-          <span>
-            NextGame <span>/</span> Your library
-          </span>
-          <span className="preview-tag">PRODUCT PREVIEW</span>
-        </div>
-        <div className="app-body">
-          <aside className="app-sidebar">
-            <span className="app-mini-brand">
-              <GameController size={21} weight="light" /> NEXTGAME
-            </span>
-            <div className="app-nav-item active">
-              <SquaresFour size={16} weight="light" /> My library
-            </div>
-            <div className="app-nav-item">
-              <Globe size={16} weight="light" /> Discover
-            </div>
-            <div className="app-nav-item">
-              <DownloadSimple size={16} weight="light" /> Downloads
-            </div>
-            <span className="app-sidebar-label">YOUR GAMES</span>
-            {games.slice(0, 4).map((g, i) => (
-              <button
-                key={g.app_id}
-                onClick={() => setSelected(i)}
-                className={`app-game-nav ${selected === i ? "current" : ""}`}
-                aria-pressed={selected === i}
-              >
-                <Image src={g.poster} alt="" width={24} height={32} />
-                <span>{g.name}</span>
-              </button>
-            ))}
-            <span className="app-connected">
-              <SteamLogo size={16} weight="light" />
-              <span>
-                Steam connected<small>Status ilustrasi</small>
-              </span>
-              <i />
-            </span>
-          </aside>
-          <div className="app-main">
-            <div className="app-main-top">
-              <div>
-                <span>GOOD EVENING, PLAYER</span>
-                <h3>
-                  Your library<span>.</span>
-                </h3>
-              </div>
-              <span className="app-profile">P</span>
-            </div>
-            <div className="app-tabs">
-              <span className="active">All games</span>
-              <span>
-                Installed <b>03</b>
-              </span>
-              <span>
-                Updates <i />
-              </span>
-              <MagnifyingGlass size={14} weight="light" />
-            </div>
-            <div className="app-feature">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  className="app-feature-art"
-                  key={game.app_id}
-                  initial={reduced ? false : { opacity: 0, scale: 1.03 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.35, ease }}
-                >
-                  <Image
-                    src={game.hero}
-                    alt={game.name}
-                    fill
-                    sizes="(max-width: 700px) 90vw, 620px"
-                    preload={selected === 0}
-                  />
-                </motion.div>
-              </AnimatePresence>
-              <div className="app-feature-copy">
-                <span>
-                  <CheckCircle weight="fill" size={11} /> IN LIBRARY ·{" "}
-                  {selected === 1 ? "UPDATE AVAILABLE" : "INSTALLED"}
-                </span>
-                <h4>{game.name}</h4>
-                <button className="app-play" onClick={onAction}>
-                  {selected === 1 ? (
-                    <ArrowsClockwise size={12} weight="light" />
-                  ) : (
-                    <Play size={12} weight="fill" />
-                  )}
-                  {selected === 1 ? "Update" : "Play"}
-                  <span>{selected === 1 ? "↻" : "↗"}</span>
-                </button>
-              </div>
-            </div>
-            <div className="app-recent-title">
-              <span>Jump back in</span>
-              <span>
-                View all <ArrowRight size={11} />
-              </span>
-            </div>
-            <div className="app-recent">
-              {games.slice(1, 4).map((g, i) => (
-                <button key={g.app_id} onClick={() => setSelected(i + 1)}>
-                  <Image src={g.header} alt={g.name} width={240} height={112} />
-                  <span>{g.name}</span>
-                  <small>
-                    <i className={i === 0 ? "update" : ""} />
-                    {i === 0
-                      ? "Update available"
-                      : i === 1
-                        ? "Not installed"
-                        : "Installed"}
-                  </small>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="app-bottom">
-          <span>
-            <span className="status-dot" /> Steam library companion
-          </span>
-          <span>Preview antarmuka · status koleksi ilustratif</span>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -620,35 +468,33 @@ export default function LibraryLanding({
                 <h3>
                   70.000+ Games.
                   <br />
-                  Instant search.
+                  Cari dari satu tempat.
                 </h3>
                 <p>
-                  Katalog besar yang terus bertambah. Cari berdasarkan nama,
-                  genre, kategori, publisher, atau tahun rilis.
+                  Cari judul atau deskripsi game, lalu persempit hasil dengan
+                  filter kategori dan genre di aplikasi desktop.
                 </p>
                 <div className="mini-search">
                   <MagnifyingGlass size={15} weight="light" />
                   <span>Cari game...</span>
-                  <kbd>⌘ K</kbd>
+                  <span className="micro-label">KATALOG</span>
                 </div>
-                <div className="mini-posters">
-                  {games.slice(0, 4).map((g, i) => (
-                    <motion.button
+                <div className="actual-mini-filters">
+                  <span>Semua kategori</span>
+                  <span>Semua genre</span>
+                </div>
+                <div className="actual-game-grid">
+                  {games.slice(0, 4).map((g) => (
+                    <button
                       key={g.app_id}
                       onClick={() => setPanel(g)}
-                      whileHover={reduced ? {} : { y: -8 }}
-                      transition={{ duration: 0.35, ease }}
                       aria-label={`Lihat detail ${g.name}`}
                     >
-                      <Image
-                        src={g.poster}
-                        alt={g.name}
-                        width={160}
-                        height={240}
-                        sizes="(max-width: 700px) 20vw, 120px"
-                      />
-                      <span>{String(i + 1).padStart(2, "0")}</span>
-                    </motion.button>
+                      <Image src={g.header} alt="" width={240} height={112} />
+                      <small>{g.genres.slice(0, 2).join(" / ")}</small>
+                      <strong>{g.name}</strong>
+                      <span>Lihat informasi dan detail game.</span>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -660,77 +506,54 @@ export default function LibraryLanding({
                 </span>
                 <span className="eyebrow">02 / LIBRARY KAMU</span>
                 <h3>
-                  Semua yang kamu butuhkan,
+                  Koleksi kamu.
                   <br />
-                  langsung terlihat.
+                  Dalam satu library.
                 </h3>
                 <p>
-                  Tambahkan game yang sudah diaktifkan ke personal library.
-                  Lihat status, detail, dan tindakan yang tersedia dari satu
-                  halaman.
+                  Game yang kamu klaim masuk ke koleksi. Cari berdasarkan nama
+                  atau App ID, urutkan berdasarkan nama atau terakhir
+                  ditambahkan, lalu buka detail game.
                 </p>
-                <div className="ownership-list">
-                  {[
-                    {
-                      game: games[0],
-                      status: "Installed",
-                      icon: <CheckCircle weight="fill" />,
-                      tone: "installed",
-                    },
-                    {
-                      game: games[1],
-                      status: "Update available",
-                      icon: <ArrowsClockwise weight="light" />,
-                      tone: "update",
-                    },
-                    {
-                      game: games[2],
-                      status: "Not installed",
-                      icon: <DownloadSimple weight="light" />,
-                      tone: "idle",
-                    },
-                    {
-                      game: games[3],
-                      status: "Available",
-                      icon: <CheckCircle weight="light" />,
-                      tone: "installed",
-                    },
-                  ].map((item) => (
-                    <div key={item.game.app_id}>
-                      <Image
-                        src={item.game.header}
-                        alt=""
-                        width={64}
-                        height={30}
-                      />
-                      <span>
-                        {item.game.name}
-                        <small>IN LIBRARY</small>
-                      </span>
-                      <span className={`ownership-status ${item.tone}`}>
-                        {item.icon}
-                        {item.status}
-                      </span>
-                    </div>
+                <div className="actual-library-toolbar">
+                  <span>Semua game</span>
+                  <span>Cari koleksimu...</span>
+                  <span>Terakhir ditambahkan</span>
+                </div>
+                <div className="actual-game-grid">
+                  {games.slice(0, 4).map((g) => (
+                    <button
+                      key={g.app_id}
+                      onClick={() => setPanel(g)}
+                      aria-label={`Buka koleksi ${g.name}`}
+                    >
+                      <Image src={g.header} alt="" width={240} height={112} />
+                      <small>{g.genres.slice(0, 2).join(" / ")}</small>
+                      <strong>{g.name}</strong>
+                      <span>Lihat informasi dan detail game.</span>
+                    </button>
                   ))}
                 </div>
                 <span className="preview-note">
-                  Ilustrasi status koleksi pada aplikasi desktop
+                  Preview tampilan koleksi aplikasi desktop
                 </span>
               </div>
             </Reveal>
             <Reveal className="bezel actions-bento" delay={0.1}>
               <div className="bezel-core">
                 <div>
-                  <span className="eyebrow">03 / INSTALL. UPDATE. PLAY.</span>
+                  <span className="eyebrow">
+                    03 / KLAIM. BUKA STEAM. MAINKAN.
+                  </span>
                   <h3>
                     Dari library.
                     <br />
                     Langsung ke game.
                   </h3>
                   <p>
-                    Cari game yang tersedia, aktifkan aksesnya, tambahkan ke
-                    library, lalu kelola instalasi dan tindakan yang tersedia.
+                    Buka detail game dan klaim game yang tersedia. Setelah klaim
+                    berhasil, buka Steam Library untuk melanjutkan instalasi dan
+                    bermain melalui Steam.
                   </p>
                 </div>
                 <div className="action-console">
@@ -740,21 +563,20 @@ export default function LibraryLanding({
                   </div>
                   <div className="action-buttons">
                     {[
+                      ["Lihat detail", <Books key="detail" weight="light" />],
                       [
-                        "Install",
-                        <DownloadSimple key="install" weight="light" />,
+                        "Klaim Game",
+                        <CheckCircle key="claim" weight="light" />,
                       ],
                       [
-                        "Update",
-                        <ArrowsClockwise key="update" weight="light" />,
+                        "Buka Steam Library",
+                        <SteamLogo key="steam" weight="light" />,
                       ],
-                      ["Play", <Play key="play" weight="fill" />],
-                      ["Uninstall", <Trash key="delete" weight="light" />],
                     ].map(([label, icon]) => (
                       <button
                         key={String(label)}
                         onClick={() => setPanel("download")}
-                        className={label === "Play" ? "play" : ""}
+                        className={label === "Klaim Game" ? "play" : ""}
                       >
                         {icon}
                         {label}
@@ -764,10 +586,9 @@ export default function LibraryLanding({
                   <div className="launcher-note">
                     <ShieldCheck size={15} weight="light" />
                     <span>
-                      Third-party launcher required
+                      Lanjutkan di Steam
                       <small>
-                        Jika diperlukan, EA App / Ubisoft Connect ditampilkan
-                        pada detail game.
+                        Instalasi dan bermain dilanjutkan melalui Steam Library.
                       </small>
                     </span>
                   </div>
@@ -848,19 +669,19 @@ export default function LibraryLanding({
                   <span>Request saja.</span>
                 </h2>
                 <p>
-                  Tidak menemukan game yang kamu cari? Kirim request dari
-                  aplikasi dan tim kami akan meninjau judul tersebut untuk
-                  ditambahkan ke library.
+                  Tidak menemukan game yang kamu cari? Kamu akan diundang ke
+                  channel Discord untuk mengajukan request. Tim kami akan
+                  meninjau judul tersebut untuk ditambahkan ke library.
                 </p>
                 <div className="request-flow">
-                  <span>Cari Game</span>
+                  <span>Join Discord</span>
                   <ArrowRight weight="light" />
-                  <span>Belum Tersedia</span>
+                  <span>Channel Request</span>
                   <ArrowRight weight="light" />
                   <span>Request Game</span>
                 </div>
                 <div className="workflow-preview">
-                  <span className="micro-label">ALUR REVIEW REQUEST</span>
+                  <span className="micro-label">REQUEST MELALUI DISCORD</span>
                   <div className="workflow-statuses">
                     {requestStatuses.map((status, i) => (
                       <span key={status} className={i === 0 ? "active" : ""}>
@@ -870,7 +691,7 @@ export default function LibraryLanding({
                   </div>
                 </div>
                 <Action onClick={() => setPanel("request")} primary>
-                  Request Game
+                  Undangan Discord segera tersedia
                 </Action>
               </div>
             </Reveal>
@@ -889,8 +710,8 @@ export default function LibraryLanding({
                 </h2>
                 <p>
                   Ada masalah dengan aplikasi, account, activation, library,
-                  atau game tertentu? Buat tiket support melalui aplikasi dan
-                  tim kami akan membantu.
+                  atau game tertentu? Kamu akan diundang ke channel support
+                  Discord untuk mendapatkan bantuan dari tim kami.
                 </p>
                 <div className="support-categories">
                   {supportCategories.map((category) => (
@@ -898,7 +719,7 @@ export default function LibraryLanding({
                   ))}
                 </div>
                 <div className="workflow-preview">
-                  <span className="micro-label">ALUR PENANGANAN TIKET</span>
+                  <span className="micro-label">BANTUAN MELALUI DISCORD</span>
                   <div className="workflow-statuses">
                     {ticketStatuses.map((status, i) => (
                       <span key={status} className={i === 0 ? "active" : ""}>
@@ -908,7 +729,7 @@ export default function LibraryLanding({
                   </div>
                 </div>
                 <Action onClick={() => setPanel("support")}>
-                  Contact Support
+                  Support via Discord
                 </Action>
               </div>
             </Reveal>
@@ -1094,17 +915,14 @@ export default function LibraryLanding({
               ["Library besar.", "Lebih dari 70.000 game Steam yang didukung."],
               ["Terus bertambah.", "Game baru ditambahkan secara berkala."],
               [
-                "Search cepat.",
-                "Cari berdasarkan nama, genre, kategori, publisher, atau tahun rilis.",
+                "Cari dan filter.",
+                "Cari judul atau deskripsi, lalu filter kategori dan genre.",
               ],
               [
                 "Request Game.",
-                "Belum tersedia? Ajukan request langsung dari aplikasi.",
+                "Belum tersedia? Ajukan request melalui channel Discord.",
               ],
-              [
-                "Support.",
-                "Ada masalah? Hubungi support langsung dari aplikasi.",
-              ],
+              ["Support.", "Ada masalah? Hubungi tim melalui channel Discord."],
             ].map(([title, detail], i) => (
               <div key={title}>
                 <span className="reason-number">0{i + 1}</span>
@@ -1422,14 +1240,16 @@ export default function LibraryLanding({
               <span className="eyebrow">
                 NEXTGAME /{" "}
                 {panel === "request" || panel === "support"
-                  ? "DESKTOP APPLICATION"
+                  ? "DISCORD COMMUNITY"
                   : "INFORMATION"}
               </span>
               <h2 id="dialog-title">{info.title}</h2>
               <p>{info.text}</p>
-              {panel === "request" ||
-              panel === "support" ||
-              panel === "tutorial" ? (
+              {panel === "request" || panel === "support" ? (
+                <span className="discord-pending">
+                  Undangan Discord tersedia nanti
+                </span>
+              ) : panel === "tutorial" ? (
                 <Action onClick={() => setPanel("download")} primary>
                   Download App
                 </Action>
@@ -1448,9 +1268,10 @@ export default function LibraryLanding({
               </h2>
               <p>
                 Tautan unduhan aplikasi belum tersedia dan akan ditambahkan
-                setelah siap. Aktivasi, personal library, Request Game, dan
-                Support Center digunakan melalui aplikasi desktop; tombol pada
-                preview halaman ini memperlihatkan alurnya.
+                setelah siap. Aktivasi dan personal library digunakan melalui
+                aplikasi desktop. Request Game dan Support Center akan melalui
+                channel Discord; tombol pada preview halaman ini memperlihatkan
+                alurnya.
               </p>
               <div className="download-platform">
                 <WindowsLogo size={22} weight="light" />
@@ -1488,7 +1309,7 @@ export default function LibraryLanding({
               </p>
               <p>
                 Pembukaan tautan Steam mengikuti kebijakan Steam. Request Game
-                dan tiket Support Center dikirim melalui aplikasi desktop;
+                dan Support Center akan ditangani melalui channel Discord;
                 halaman ini tidak mengumpulkan request atau tiket bantuan.
               </p>
             </div>

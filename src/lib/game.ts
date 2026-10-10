@@ -3,6 +3,7 @@ export type Game = {
   name: string;
   description: string;
   genres: string[];
+  categories?: string[];
   publisher: string;
   release_date: string | null;
   steam_url: string;

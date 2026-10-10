@@ -10,12 +10,12 @@ import "./library.css";
 export const metadata: Metadata = {
   title: "NextGame — 70.000+ Game. Satu Library. Terus Bertambah.",
   description:
-    "Jelajahi 70.000+ game Steam yang didukung, aktifkan akses, dan kelola personal library melalui satu desktop app. Request Game dan Support Center dari aplikasi. EA, Ubisoft, dan Denuvo coming soon.",
+    "Jelajahi 70.000+ game Steam yang didukung, aktifkan akses, dan kelola personal library melalui satu desktop app. Request Game dan Support Center melalui Discord. EA, Ubisoft, dan Denuvo coming soon.",
   icons: { icon: "/icon.svg" },
   openGraph: {
     title: "NextGame — 70.000+ Game. Satu Library. Terus Bertambah.",
     description:
-      "Cari. Aktifkan. Tambahkan ke Library. Mainkan. Satu aplikasi untuk katalog, personal library, Request Game, dan support.",
+      "Cari. Aktifkan. Tambahkan ke Library. Mainkan. Satu aplikasi untuk katalog dan personal library, dengan request dan support melalui Discord.",
     locale: "id_ID",
     type: "website",
   },

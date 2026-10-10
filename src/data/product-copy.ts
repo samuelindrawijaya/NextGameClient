@@ -14,7 +14,7 @@ export const faq = [
   ],
   [
     "Bagaimana cara mencari game?",
-    "Game dapat dicari berdasarkan nama dan difilter menggunakan genre, kategori, publisher, tahun rilis, serta informasi lain yang tersedia di katalog.",
+    "Cari berdasarkan judul atau deskripsi di katalog, lalu gunakan filter kategori dan genre. Di Library, cari berdasarkan nama atau App ID dan urutkan berdasarkan nama atau terakhir ditambahkan.",
   ],
   [
     "Bagaimana cara menambahkan game ke library?",
@@ -26,11 +26,11 @@ export const faq = [
   ],
   [
     "Bagaimana kalau game yang saya cari belum tersedia?",
-    "Gunakan fitur Request Game dari aplikasi. Tim akan meninjau game tersebut untuk kemungkinan ditambahkan ke library.",
+    "Kamu akan diundang ke channel Request Game di Discord. Sampaikan judul game di sana agar tim dapat meninjaunya. Tautan undangan tersedia nanti.",
   ],
   [
     "Apakah saya bisa melihat status request game?",
-    "Ya. Request dapat memiliki status seperti Requested, Reviewing, Available, atau Rejected sesuai proses review.",
+    "Perkembangan request akan disampaikan oleh tim melalui channel Discord. Undangan untuk bergabung tersedia nanti.",
   ],
   [
     "Apakah katalog akan terus bertambah?",
@@ -62,23 +62,22 @@ export const faq = [
   ],
   [
     "Bagaimana kalau saya mengalami masalah?",
-    "Gunakan Support Center di aplikasi untuk membuat tiket bantuan.",
+    "Kamu akan diundang ke channel Support Center di Discord untuk mendapatkan bantuan dari tim. Tautan undangan tersedia nanti.",
   ],
   [
     "Masalah apa saja yang bisa dibantu oleh support?",
     "Support dapat menangani masalah account, application, activation, library, game issue, request game, dan masalah teknis lainnya.",
   ],
   [
-    "Apakah saya bisa melihat status tiket support?",
-    "Ya. Ticket dapat memiliki status seperti Open, In Progress, Resolved, dan Closed.",
+    "Bagaimana saya mengikuti penanganan support?",
+    "Lanjutkan percakapan dengan tim melalui channel support Discord untuk mengikuti penanganan masalahmu. Tautan undangan tersedia nanti.",
   ],
 ] as const;
 
 export const requestStatuses = [
-  "Requested",
-  "Reviewing",
-  "Available",
-  "Rejected",
+  "Join Discord",
+  "Channel Request",
+  "Review oleh tim",
 ];
 export const supportCategories = [
   "Account",
@@ -89,16 +88,20 @@ export const supportCategories = [
   "Request Game",
   "Other",
 ];
-export const ticketStatuses = ["Open", "In Progress", "Resolved", "Closed"];
+export const ticketStatuses = [
+  "Join Discord",
+  "Channel Support",
+  "Bantuan tim",
+];
 
 export const resourceInfo = {
   request: {
     title: "Request Game.",
-    text: "Cari judul melalui aplikasi desktop. Jika belum tersedia, gunakan Request Game agar tim dapat meninjaunya untuk ditambahkan ke library. Request dikirim dari aplikasi; landing ini menampilkan informasi fiturnya.",
+    text: "Game belum tersedia? Kamu akan diundang ke channel Request Game di Discord untuk menyampaikan judul yang kamu cari. Tim akan meninjaunya untuk kemungkinan ditambahkan ke library. Tautan undangan Discord tersedia nanti.",
   },
   support: {
     title: "Support Center.",
-    text: "Buat tiket melalui Support Center di aplikasi desktop. Pilih kategori masalah, jelaskan kendala yang kamu alami, lalu ikuti status penanganannya. Tiket bantuan dikirim dari aplikasi.",
+    text: "Kamu akan diundang ke channel Support Center di Discord. Jelaskan kendala account, aplikasi, activation, library, atau game yang kamu alami, lalu tim akan membantu melalui channel tersebut. Tautan undangan Discord tersedia nanti.",
   },
   tutorial: {
     title: "Cari. Aktifkan. Mainkan.",

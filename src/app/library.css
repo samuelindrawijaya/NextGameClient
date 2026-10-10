@@ -3757,6 +3757,98 @@ h4 {
     grid-row: 1;
   }
 }
+.actual-mini-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 12px 0 22px;
+}
+.actual-mini-filters > span {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 10px;
+  color: var(--body);
+}
+.actual-game-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+.actual-game-grid > button {
+  min-width: 0;
+  overflow: hidden;
+  text-align: left;
+  padding: 5px 5px 14px;
+  border: 1px solid var(--line);
+  border-radius: 19px;
+  background: var(--raised);
+}
+.actual-game-grid img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 460/215;
+  object-fit: cover;
+  border-radius: 13px;
+  transition: transform 500ms;
+}
+.actual-game-grid button:hover img {
+  transform: scale(1.035);
+}
+.actual-game-grid small {
+  display: block;
+  font-size: 8px;
+  color: var(--body);
+  margin: 12px 9px 6px;
+  text-transform: uppercase;
+}
+.actual-game-grid strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0 9px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.actual-game-grid button > span {
+  display: block;
+  font-size: 9px;
+  line-height: 1.6;
+  color: var(--body);
+  margin: 7px 9px 0;
+}
+.actual-library-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin-top: 28px;
+  font-size: 9px;
+  color: var(--body);
+}
+.actual-library-toolbar > span:first-child {
+  color: var(--lime);
+  margin-right: auto;
+}
+.actual-library-toolbar > span + span {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px 10px;
+}
+@media (max-width: 700px) {
+  .actual-game-grid {
+    gap: 9px;
+  }
+  .actual-game-grid strong {
+    font-size: 11px;
+  }
+  .actual-mini-filters {
+    gap: 9px;
+  }
+}
+
 /* Product brief: growing library, game requests and desktop support. */
 .hero h1 > .hero-count {
   color: var(--text);

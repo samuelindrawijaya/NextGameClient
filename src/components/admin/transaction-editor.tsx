@@ -254,7 +254,7 @@ export default function TransactionEditor({
               "transactions",
               {
                 user_id: user.user_id,
-                game_id: isAllAccess ? null : game!.id,
+                game_id: isAllAccess ? "0" : game!.id,
                 invoice_number: invoiceNumber.trim(),
                 platform,
                 is_procces: isProcessed,

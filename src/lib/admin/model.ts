@@ -407,10 +407,6 @@ export function validate(
       continue;
     }
     const value = raw[field.key];
-    // All access: skip game_id validation entirely
-    if (field.key === "game_id" && raw.is_all_access === true) {
-      continue;
-    }
     if (field.type === "boolean") {
       if (typeof value !== "boolean")
         throw new Error(`${field.label} harus boolean.`);

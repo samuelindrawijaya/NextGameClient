@@ -274,18 +274,39 @@ export const entities: Record<Entity, EntitySpec> = {
     title: "App Versions",
     table: "version_apps",
     pk: "id",
-    select: "id::text,version,created_at,updated_at",
+    select:
+      "id::text,version,release_notes,download_url,signature,is_published,published_at,created_at,updated_at",
     order: "id.desc",
     create: true,
     edit: true,
     remove: true,
     fields: [
       { key: "version", label: "Version", type: "text", required: true },
+      { key: "release_notes", label: "Release notes", type: "long" },
+      {
+        key: "download_url",
+        label: "Download URL",
+        type: "text",
+        required: true,
+      },
+      { key: "signature", label: "Signature", type: "long" },
+      {
+        key: "is_published",
+        label: "Published",
+        type: "boolean",
+        default: false,
+      },
+      {
+        key: "published_at",
+        label: "Published at",
+        type: "text",
+      },
     ],
     columns: [
       ["version", "Version"],
+      ["is_published", "Published"],
+      ["published_at", "Published at"],
       ["created_at", "Created"],
-      ["updated_at", "Updated"],
     ],
   },
   sync: {

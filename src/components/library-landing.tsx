@@ -34,6 +34,7 @@ import {
   supportCategories,
   ticketStatuses,
   resourceInfo,
+  discordInviteUrl,
 } from "@/data/product-copy";
 
 type Panel =
@@ -83,6 +84,8 @@ function Action({
     <a
       className={`action ${primary ? "primary" : ""}`}
       href={href}
+      target={href.startsWith("https://") ? "_blank" : undefined}
+      rel={href.startsWith("https://") ? "noopener noreferrer" : undefined}
       onClick={onClick}
     >
       {inner}
@@ -652,7 +655,6 @@ export default function LibraryLanding({
           onOpen={setPanel}
           onToggleFavorite={toggleFavorite}
           onOpenFavorites={() => setPanel("favorites")}
-          onRequest={() => setPanel("request")}
         />
 
         <section className="section container help-grid">
@@ -669,9 +671,8 @@ export default function LibraryLanding({
                   <span>Request saja.</span>
                 </h2>
                 <p>
-                  Tidak menemukan game yang kamu cari? Kamu akan diundang ke
-                  channel Discord untuk mengajukan request. Tim kami akan
-                  meninjau judul tersebut untuk ditambahkan ke library.
+                  Tidak menemukan game yang kamu cari? Bergabung ke Discord
+                  untuk mengajukan request agar dapat ditinjau tim kami.
                 </p>
                 <div className="request-flow">
                   <span>Join Discord</span>
@@ -690,8 +691,8 @@ export default function LibraryLanding({
                     ))}
                   </div>
                 </div>
-                <Action onClick={() => setPanel("request")} primary>
-                  Undangan Discord segera tersedia
+                <Action href={discordInviteUrl} primary>
+                  Join Discord untuk Request Game
                 </Action>
               </div>
             </Reveal>
@@ -710,8 +711,7 @@ export default function LibraryLanding({
                 </h2>
                 <p>
                   Ada masalah dengan aplikasi, account, activation, library,
-                  atau game tertentu? Kamu akan diundang ke channel support
-                  Discord untuk mendapatkan bantuan dari tim kami.
+                  atau game tertentu? Hubungi tim kami melalui Discord.
                 </p>
                 <div className="support-categories">
                   {supportCategories.map((category) => (
@@ -728,7 +728,7 @@ export default function LibraryLanding({
                     ))}
                   </div>
                 </div>
-                <Action onClick={() => setPanel("support")}>
+                <Action href={discordInviteUrl}>
                   Support via Discord
                 </Action>
               </div>
@@ -1051,7 +1051,13 @@ export default function LibraryLanding({
               <a href="#faq">FAQ</a>
               <button onClick={() => setPanel("tutorial")}>Tutorial</button>
               <a href="#support">Support Center</a>
-              <button onClick={() => setPanel("support")}>Contact</button>
+              <a
+                href={discordInviteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Contact
+              </a>
               <button onClick={() => setPanel("status")}>Status</button>
             </div>
             <div>
@@ -1237,19 +1243,10 @@ export default function LibraryLanding({
               <span className="icon-tile">
                 <Books size={27} weight="light" />
               </span>
-              <span className="eyebrow">
-                NEXTGAME /{" "}
-                {panel === "request" || panel === "support"
-                  ? "DISCORD COMMUNITY"
-                  : "INFORMATION"}
-              </span>
+              <span className="eyebrow">NEXTGAME / INFORMATION</span>
               <h2 id="dialog-title">{info.title}</h2>
               <p>{info.text}</p>
-              {panel === "request" || panel === "support" ? (
-                <span className="discord-pending">
-                  Undangan Discord tersedia nanti
-                </span>
-              ) : panel === "tutorial" ? (
+              {panel === "tutorial" ? (
                 <Action onClick={() => setPanel("download")} primary>
                   Download App
                 </Action>

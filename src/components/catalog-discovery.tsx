@@ -11,6 +11,7 @@ import {
 } from "@phosphor-icons/react";
 import type { Game } from "@/lib/game";
 import styles from "./catalog-discovery.module.css";
+import { discordInviteUrl } from "@/data/product-copy";
 
 type Props = {
   games: Game[];
@@ -18,14 +19,13 @@ type Props = {
   onOpen: (game: Game) => void;
   onToggleFavorite: (appId: number) => void;
   onOpenFavorites: () => void;
-  onRequest: () => void;
 };
 
 const subscribe = () => () => {};
 const clientReady = () => true;
 const serverReady = () => false;
 
-export default function CatalogDiscovery({ games, onOpen, onRequest }: Props) {
+export default function CatalogDiscovery({ games, onOpen }: Props) {
   const ready = useSyncExternalStore(subscribe, clientReady, serverReady);
   const [query, setQuery] = useState("");
   const [genre, setGenre] = useState("all");
@@ -186,9 +186,14 @@ export default function CatalogDiscovery({ games, onOpen, onRequest }: Props) {
                 Coba kata kunci lain atau ajukan Request Game melalui Discord.
               </p>
               <div>
-                <button className={styles.spotlightAction} onClick={onRequest}>
+                <a
+                  className={styles.spotlightAction}
+                  href={discordInviteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   Request Game <ArrowRight size={16} />
-                </button>
+                </a>
                 <button className={styles.reset} onClick={reset}>
                   Hapus semua filter
                 </button>
@@ -199,9 +204,13 @@ export default function CatalogDiscovery({ games, onOpen, onRequest }: Props) {
             <span>
               PREVIEW KATALOG ? {shown.length} dari {games.length} game pilihan
             </span>
-            <button onClick={onRequest}>
+            <a
+              href={discordInviteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Game belum ada? Request via Discord <ArrowRight size={16} />
-            </button>
+            </a>
           </div>
         </div>
       </div>

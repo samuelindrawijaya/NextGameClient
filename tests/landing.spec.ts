@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("desktop preview cycles, pauses and opens Discord information", async ({
+test("desktop preview cycles, pauses and links to Discord", async ({
   page,
 }) => {
   await page.goto("/");
@@ -28,16 +28,12 @@ test("desktop preview cycles, pauses and opens Discord information", async ({
     .click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");
-  await page
-    .locator("#request-game")
-    .getByRole("button", { name: "Undangan Discord segera tersedia" })
-    .click();
-  await expect(page.getByRole("dialog")).toContainText(
-    "channel Request Game di Discord",
-  );
-  await expect(page.getByRole("dialog")).toContainText(
-    "Undangan Discord tersedia nanti",
-  );
+  await expect(
+    page
+      .locator("#request-game")
+      .getByRole("link", { name: "Join Discord untuk Request Game" }),
+  )
+    .toHaveAttribute("href", "https://discord.gg/Ug5BgyRPDV");
 });
 
 test("reduced-motion mobile stays usable", async ({ page }) => {
@@ -88,14 +84,10 @@ test("actual catalog filters, details and honest availability", async ({
   await expect(
     page.getByRole("heading", { name: "Tidak ada judul yang cocok" }),
   ).toBeVisible();
-  await page
-    .locator(".empty-state")
-    .getByRole("button", { name: "Request Game" })
-    .click();
-  await expect(page.getByRole("dialog")).toContainText(
-    "channel Request Game di Discord",
-  );
-  await page.keyboard.press("Escape");
+  await expect(
+    page.locator(".empty-state").getByRole("link", { name: "Request Game" }),
+  )
+    .toHaveAttribute("href", "https://discord.gg/Ug5BgyRPDV");
   await page.getByRole("button", { name: "Hapus semua filter" }).click();
   await page
     .locator(".game-shell")
@@ -134,14 +126,8 @@ test("actual catalog filters, details and honest availability", async ({
     .getByRole("link", { name: "Lihat Katalog" })
     .click();
   await expect(page.getByRole("dialog")).not.toBeVisible();
-  await page.getByRole("button", { name: "Support via Discord" }).click();
-  await expect(page.getByRole("dialog")).toContainText(
-    "channel Support Center di Discord",
-  );
-  await expect(page.getByRole("dialog")).toContainText(
-    "Undangan Discord tersedia nanti",
-  );
-  await page.keyboard.press("Escape");
+  await expect(page.getByRole("link", { name: "Support via Discord" }))
+    .toHaveAttribute("href", "https://discord.gg/Ug5BgyRPDV");
   await expect(page.locator(".faq-item")).toHaveCount(18);
   await page
     .getByRole("button", { name: "Apakah semua game Steam tersedia?" })
@@ -182,7 +168,7 @@ test("mobile navigation, accordion and viewport fit", async ({ page }) => {
     })
     .click();
   await expect(page.locator("#faq-answer-17")).toContainText(
-    "channel support Discord",
+    "melalui Discord",
   );
   const fits = await page.evaluate(
     () => document.documentElement.scrollWidth <= window.innerWidth,

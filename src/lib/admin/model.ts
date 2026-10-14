@@ -524,6 +524,12 @@ export function validate(
     out.machine_info ??= "{}";
   }
   if (!creating && entity === "assets") delete out.game_id;
+  if (entity === "versions") {
+    if (out.is_published === true && !out.published_at)
+      out.published_at = new Date().toISOString();
+    else if (out.is_published === false)
+      out.published_at = null;
+  }
   if (!Object.keys(out).length)
     throw new Error("Tidak ada perubahan yang valid.");
   return out;

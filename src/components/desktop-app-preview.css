@@ -394,15 +394,6 @@
 .dp-footer {
   font-size: 6px;
 }
-.discord-pending {
-  display: inline-flex;
-  margin-top: 20px;
-  padding: 10px 16px;
-  border: 1px solid var(--line);
-  border-radius: 99px;
-  font-size: 12px;
-  color: var(--body);
-}
 @media (max-width: 700px) {
   .dp-body {
     grid-template-columns: 49px minmax(0, 1fr);

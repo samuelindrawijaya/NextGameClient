@@ -1,4 +1,6 @@
 // Product copy supplied in LANDING_PAGE_PRODUCT_BRIEF_FAQ.md.
+export const discordInviteUrl = "https://discord.gg/Ug5BgyRPDV";
+
 export const faq = [
   [
     "Apa sebenarnya aplikasi ini?",
@@ -26,11 +28,11 @@ export const faq = [
   ],
   [
     "Bagaimana kalau game yang saya cari belum tersedia?",
-    "Kamu akan diundang ke channel Request Game di Discord. Sampaikan judul game di sana agar tim dapat meninjaunya. Tautan undangan tersedia nanti.",
+    "Gabung ke Discord untuk menyampaikan judul game yang kamu cari agar tim dapat meninjaunya.",
   ],
   [
     "Apakah saya bisa melihat status request game?",
-    "Perkembangan request akan disampaikan oleh tim melalui channel Discord. Undangan untuk bergabung tersedia nanti.",
+    "Perkembangan request akan disampaikan oleh tim melalui Discord.",
   ],
   [
     "Apakah katalog akan terus bertambah?",
@@ -62,7 +64,7 @@ export const faq = [
   ],
   [
     "Bagaimana kalau saya mengalami masalah?",
-    "Kamu akan diundang ke channel Support Center di Discord untuk mendapatkan bantuan dari tim. Tautan undangan tersedia nanti.",
+    "Gabung ke Discord untuk mendapatkan bantuan dari tim.",
   ],
   [
     "Masalah apa saja yang bisa dibantu oleh support?",
@@ -70,7 +72,7 @@ export const faq = [
   ],
   [
     "Bagaimana saya mengikuti penanganan support?",
-    "Lanjutkan percakapan dengan tim melalui channel support Discord untuk mengikuti penanganan masalahmu. Tautan undangan tersedia nanti.",
+    "Lanjutkan percakapan dengan tim melalui Discord untuk mengikuti penanganan masalahmu.",
   ],
 ] as const;
 
@@ -95,14 +97,6 @@ export const ticketStatuses = [
 ];
 
 export const resourceInfo = {
-  request: {
-    title: "Request Game.",
-    text: "Game belum tersedia? Kamu akan diundang ke channel Request Game di Discord untuk menyampaikan judul yang kamu cari. Tim akan meninjaunya untuk kemungkinan ditambahkan ke library. Tautan undangan Discord tersedia nanti.",
-  },
-  support: {
-    title: "Support Center.",
-    text: "Kamu akan diundang ke channel Support Center di Discord. Jelaskan kendala account, aplikasi, activation, library, atau game yang kamu alami, lalu tim akan membantu melalui channel tersebut. Tautan undangan Discord tersedia nanti.",
-  },
   tutorial: {
     title: "Cari. Aktifkan. Mainkan.",
     text: "Jelajahi katalog di aplikasi desktop, buka game yang tersedia, aktifkan aksesnya, lalu tambahkan ke personal library. Kelola instalasi dan tindakan yang tersedia dari halaman game. Panduan lengkap akan ditambahkan setelah tersedia.",

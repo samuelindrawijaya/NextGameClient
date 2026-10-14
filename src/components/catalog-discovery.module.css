@@ -619,7 +619,8 @@
   font-weight: 400;
   padding-inline: 4px;
 }
-.foot button {
+.foot button,
+.foot a {
   display: inline-flex;
   align-items: center;
   gap: 9px;

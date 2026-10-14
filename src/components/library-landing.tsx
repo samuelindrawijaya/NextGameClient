@@ -465,20 +465,20 @@ export default function LibraryLanding({
                   <span className="icon-tile">
                     <Books size={25} weight="light" />
                   </span>
-                  <span className="micro-label">
+                  {/* <span className="micro-label">
                     BROWSE WITHOUT THE BACK-AND-FORTH
-                  </span>
+                  </span> */}
                 </div>
                 <h3>
                   70.000+ Games.
                   <br />
                   Cari dari satu tempat.
                 </h3>
-                <p>
+                {/* <p>
                   Cari judul atau deskripsi game, lalu persempit hasil dengan
                   filter kategori dan genre di aplikasi desktop.
-                </p>
-                <div className="mini-search">
+                </p> */}
+                {/* <div className="mini-search">
                   <MagnifyingGlass size={15} weight="light" />
                   <span>Cari game...</span>
                   <span className="micro-label">KATALOG</span>
@@ -486,7 +486,7 @@ export default function LibraryLanding({
                 <div className="actual-mini-filters">
                   <span>Semua kategori</span>
                   <span>Semua genre</span>
-                </div>
+                </div> */}
                 <div className="actual-game-grid">
                   {games.slice(0, 4).map((g) => (
                     <button
@@ -503,7 +503,7 @@ export default function LibraryLanding({
                 </div>
               </div>
             </Reveal>
-            <Reveal className="bezel ownership-bento" delay={0.08}>
+            {/* <Reveal className="bezel ownership-bento" delay={0.08}>
               <div className="bezel-core">
                 <span className="icon-tile">
                   <CheckCircle size={25} weight="light" />
@@ -542,7 +542,7 @@ export default function LibraryLanding({
                   Preview tampilan koleksi aplikasi desktop
                 </span>
               </div>
-            </Reveal>
+            </Reveal> */}
             <Reveal className="bezel actions-bento" delay={0.1}>
               <div className="bezel-core">
                 <div>

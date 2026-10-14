@@ -971,11 +971,11 @@ h4 {
 }
 .bento-grid {
   display: grid;
-  grid-template-columns: 1.1fr 1fr;
+  /* grid-template-columns: 1.1fr 1fr; */
   gap: 23px;
 }
 .library-bento .bezel-core {
-  padding: 32px 32px 0;
+  padding: 32px 32px 24px;
   background:
     radial-gradient(
       ellipse at 50% 120%,

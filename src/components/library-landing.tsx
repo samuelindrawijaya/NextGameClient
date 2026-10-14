@@ -43,6 +43,7 @@ type Panel =
   | "access"
   | "premium"
   | "favorites"
+  | "community"
   | "privacy"
   | keyof typeof resourceInfo
   | null;
@@ -129,7 +130,7 @@ export default function LibraryLanding({
 }) {
   const reduced = useMotionPreference();
   const [favorites, setFavorites] = useState<number[]>([]);
-  const [panel, setPanel] = useState<Panel>(null);
+  const [panel, setPanel] = useState<Panel>("community");
   const info =
     typeof panel === "string" && panel in resourceInfo
       ? resourceInfo[panel as keyof typeof resourceInfo]
@@ -1089,7 +1090,7 @@ export default function LibraryLanding({
 
       <dialog
         ref={dialog}
-        className="dialog"
+        className={`dialog${panel === "community" ? " discord-announcement" : ""}`}
         aria-labelledby="dialog-title"
         onCancel={() => setPanel(null)}
         onClick={(e) => {
@@ -1251,6 +1252,42 @@ export default function LibraryLanding({
                   Download App
                 </Action>
               ) : null}
+            </div>
+          ) : panel === "community" ? (
+            <div className="dialog-content discord-announcement-content">
+              <span className="eyebrow">GABUNG KE DISCORD RESMI</span>
+              <h2 id="dialog-title">
+                Update terbaru.
+                <br />
+                <span>Bantuan lebih cepat.</span>
+              </h2>
+              <p>
+                Ikuti kabar NextGame dan hubungi tim saat menemui kendala.
+                Sampaikan masalah di channel yang sesuai agar tim dapat
+                membantumu lebih cepat.
+              </p>
+              <div className="discord-community-benefits">
+                <div>
+                  <ArrowsClockwise size={18} weight="light" />
+                  <span>
+                    <strong>Update NextGame</strong>
+                    <small>Kabar dan informasi terbaru</small>
+                  </span>
+                </div>
+                <div>
+                  <Headset size={18} weight="light" />
+                  <span>
+                    <strong>Bantuan dari tim</strong>
+                    <small>Penanganan masalah lebih cepat</small>
+                  </span>
+                </div>
+              </div>
+              <Action href={discordInviteUrl} primary>
+                Gabung Discord
+              </Action>
+              <span className="discord-community-footnote">
+                Update, Request Game, dan Support Center NextGame
+              </span>
             </div>
           ) : panel === "download" ? (
             <div className="dialog-content info-dialog">

@@ -1,9 +1,16 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+
+async function dismissDiscordAnnouncement(page: Page) {
+  const dialog = page.locator("dialog.discord-announcement");
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Tutup dialog" }).click();
+}
 
 test("desktop preview cycles, pauses and links to Discord", async ({
   page,
 }) => {
   await page.goto("/");
+  await dismissDiscordAnnouncement(page);
   const preview = page.locator(".desktop-preview");
   await preview.scrollIntoViewIfNeeded();
   const title = preview.locator(".dp-feature-copy h4");
@@ -45,6 +52,7 @@ test("reduced-motion mobile stays usable", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize({ width: 360, height: 800 });
   await page.goto("/");
+  await dismissDiscordAnnouncement(page);
   await expect(
     page.getByRole("heading", { name: "70.000+ Game. Satu Library." }),
   ).toBeVisible();
@@ -65,6 +73,7 @@ test("actual catalog filters, details and honest availability", async ({
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
+  await dismissDiscordAnnouncement(page);
   await expect(
     page.getByRole("heading", { name: "70.000+ Game. Satu Library." }),
   ).toBeVisible();
@@ -142,6 +151,7 @@ test("actual catalog filters, details and honest availability", async ({
 test("mobile navigation, accordion and viewport fit", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
+  await dismissDiscordAnnouncement(page);
   await page.getByRole("button", { name: "Buka menu" }).click();
   await expect(
     page.getByRole("button", { name: "Tutup menu" }),

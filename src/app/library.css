@@ -2082,6 +2082,108 @@ h4 {
   font-size: 38px;
   margin-top: 17px;
 }
+.discord-announcement {
+  max-width: 650px;
+  border-color: color-mix(in srgb, var(--lime) 34%, var(--line));
+}
+.discord-announcement .dialog-inner {
+  background: var(--surface);
+}
+.discord-announcement-content {
+  padding: 38px 44px 34px;
+}
+.discord-announcement-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.discord-announcement-topline .icon-tile {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--lime) 9%, var(--bg));
+  border-color: color-mix(in srgb, var(--lime) 25%, var(--line));
+  color: var(--lime);
+}
+.discord-community-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 12px;
+  border: 1px solid color-mix(in srgb, var(--line) 62%, transparent);
+  border-radius: 999px;
+  color: var(--lead);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+}
+.discord-announcement-content > .eyebrow {
+  color: var(--lime);
+}
+.discord-announcement-content h2 {
+  max-width: 510px;
+  margin-top: 12px;
+  font-size: clamp(34px, 5vw, 46px);
+  line-height: 1.08;
+  letter-spacing: -0.055em;
+}
+.discord-announcement-content h2 > span {
+  color: var(--lead);
+}
+.discord-announcement-content > p {
+  max-width: 470px;
+  margin-top: 16px;
+  color: var(--body);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.discord-community-benefits {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 24px;
+}
+.discord-community-benefits > div {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--bg) 58%, transparent);
+  color: var(--lime);
+}
+.discord-community-benefits > div > svg {
+  flex: none;
+}
+.discord-community-benefits > div > span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.discord-community-benefits strong {
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 600;
+}
+.discord-community-benefits small {
+  color: var(--body);
+  font-size: 9px;
+  line-height: 1.5;
+}
+.discord-announcement-content > .action {
+  min-height: 48px;
+  margin-top: 24px;
+  padding-left: 20px;
+}
+.discord-community-footnote {
+  display: block;
+  margin-top: 12px;
+  color: var(--dim);
+  font-size: 9px;
+  letter-spacing: 0.02em;
+}
 .download-platform {
   display: flex;
   align-items: center;
@@ -3324,6 +3426,22 @@ h4 {
   .info-dialog h2 {
     font-size: 32px;
   }
+  .discord-announcement-content {
+    padding: 34px 25px 27px;
+  }
+  .discord-announcement-content h2 {
+    font-size: clamp(30px, 7vw, 38px);
+  }
+  .discord-announcement-content > p {
+    font-size: 12px;
+  }
+  .discord-community-benefits {
+    gap: 8px;
+    margin-top: 20px;
+  }
+  .discord-community-benefits > div {
+    padding: 11px;
+  }
   .download-platform {
     gap: 12px;
     padding: 15px;
@@ -3352,6 +3470,17 @@ h4 {
     font-size: 10px;
     padding: 11px 17px;
     bottom: 20px;
+  }
+}
+@media (max-width: 480px) {
+  .discord-announcement-content {
+    padding-inline: 20px;
+  }
+  .discord-announcement-topline {
+    margin-bottom: 20px;
+  }
+  .discord-community-benefits {
+    grid-template-columns: 1fr;
   }
 }
 @media (max-width: 370px) {

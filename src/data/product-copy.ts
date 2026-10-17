@@ -1,5 +1,8 @@
 // Product copy supplied in LANDING_PAGE_PRODUCT_BRIEF_FAQ.md.
 export const discordInviteUrl = "https://discord.gg/Ug5BgyRPDV";
+export const appDownloadUrl =
+  "https://nextgame-download.clarisapp21.workers.dev/NextGame_0.1.3_x64-setup.exe";
+export const steamAccessUrl = "https://id.shp.ee/QfZFvVVe";
 
 export const faq = [
   [
@@ -56,7 +59,7 @@ export const faq = [
   ],
   [
     "Apakah aplikasinya menggunakan subscription?",
-    "Untuk Steam Access, model yang direncanakan adalah one-time purchase, bukan subscription bulanan. Harga dan tautan pembelian belum tersedia.",
+    "Steam Access menggunakan one-time purchase, bukan subscription bulanan. Harga dan pembelian tersedia melalui tombol Get Steam Access.",
   ],
   [
     "Apakah aplikasi mendapatkan update?",

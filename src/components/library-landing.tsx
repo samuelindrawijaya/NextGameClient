@@ -35,6 +35,8 @@ import {
   ticketStatuses,
   resourceInfo,
   discordInviteUrl,
+  appDownloadUrl,
+  steamAccessUrl,
 } from "@/data/product-copy";
 
 type Panel =
@@ -856,10 +858,10 @@ export default function LibraryLanding({
                 </ul>
                 <div className="access-purchase">
                   <span>
-                    <strong>Harga segera diumumkan</strong>
+                    <strong>Lihat harga di Shopee</strong>
                     <small>Sekali bayar · akses lifetime</small>
                   </span>
-                  <Action onClick={() => setPanel("access")} primary>
+                  <Action href={steamAccessUrl} primary>
                     Get Steam Access
                   </Action>
                 </div>
@@ -1008,7 +1010,7 @@ export default function LibraryLanding({
                 Download App
               </Action>
               <Action href="#katalog">Explore Games</Action>
-              <Action onClick={() => setPanel("access")}>
+              <Action href={steamAccessUrl}>
                 Get Steam Access
               </Action>
             </div>
@@ -1232,7 +1234,7 @@ export default function LibraryLanding({
               </h2>
               <p>
                 {panel === "access"
-                  ? "Steam Access dirancang sebagai akses lifetime dengan sekali bayar. Harga dan tautan pembelian belum tersedia; informasi akan diperbarui setelah siap."
+                  ? "Steam Access tersedia sebagai akses lifetime dengan sekali bayar. Lihat harga dan lakukan pembelian melalui Shopee."
                   : "EA, Ubisoft, dan dukungan terkait Denuvo masih Coming Soon. Pendaftaran notifikasi belum tersedia; informasi peluncuran akan diumumkan pada halaman ini."}
               </p>
               <Action href="#katalog" onClick={() => setPanel(null)} primary>
@@ -1298,11 +1300,11 @@ export default function LibraryLanding({
               <h2 id="dialog-title">
                 Satu aplikasi.
                 <br />
-                Segera di desktop kamu.
+                Siap di desktop kamu.
               </h2>
               <p>
-                Tautan unduhan aplikasi belum tersedia dan akan ditambahkan
-                setelah siap. Aktivasi dan personal library digunakan melalui
+                Download NextGame versi 0.1.3 untuk Windows x64.
+                Aktivasi dan personal library digunakan melalui
                 aplikasi desktop. Request Game dan Support Center akan melalui
                 channel Discord; tombol pada preview halaman ini memperlihatkan
                 alurnya.
@@ -1316,16 +1318,8 @@ export default function LibraryLanding({
                   </small>
                 </span>
               </div>
-              <Action
-                onClick={() => {
-                  setPanel(null);
-                  document.getElementById("katalog")?.scrollIntoView({
-                    behavior: reduced ? "instant" : "smooth",
-                  });
-                }}
-                primary
-              >
-                Explore Games
+              <Action href={appDownloadUrl} primary>
+                Download NextGame 0.1.3
               </Action>
             </div>
           ) : panel === "privacy" ? (

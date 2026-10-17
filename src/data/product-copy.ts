@@ -1,7 +1,7 @@
 // Product copy supplied in LANDING_PAGE_PRODUCT_BRIEF_FAQ.md.
 export const discordInviteUrl = "https://discord.gg/Ug5BgyRPDV";
 export const appDownloadUrl =
-  "https://nextgame-download.clarisapp21.workers.dev/NextGame_0.1.3_x64-setup.exe";
+  "https://nextgame-download.clarisapp21.workers.dev/NextGame_0.1.5_x64-setup.exe";
 export const steamAccessUrl = "https://id.shp.ee/QfZFvVVe";
 
 export const faq = [

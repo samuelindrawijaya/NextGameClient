@@ -1303,7 +1303,7 @@ export default function LibraryLanding({
                 Siap di desktop kamu.
               </h2>
               <p>
-                Download NextGame versi 0.1.3 untuk Windows x64.
+                Download NextGame versi 0.1.5 untuk Windows x64.
                 Aktivasi dan personal library digunakan melalui
                 aplikasi desktop. Request Game dan Support Center akan melalui
                 channel Discord; tombol pada preview halaman ini memperlihatkan
@@ -1319,7 +1319,7 @@ export default function LibraryLanding({
                 </span>
               </div>
               <Action href={appDownloadUrl} primary>
-                Download NextGame 0.1.3
+                Download NextGame 0.1.5
               </Action>
             </div>
           ) : panel === "privacy" ? (
